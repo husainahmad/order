@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.harmoni.pos.order.mapper.OrderDetailSkuMapper">
+  <resultMap id="BaseResultMap" type="com.harmoni.pos.order.model.OrderDetailSku">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="order_detail_sku_order_detail_id" jdbcType="INTEGER" property="orderDetailId" />
+    <result column="order_detail_sku_id" jdbcType="INTEGER" property="skuId" />
+    <result column="order_detail_sku_sku_name" jdbcType="VARCHAR" property="skuName" />
+    <result column="order_detail_sku_quantity" jdbcType="INTEGER" property="quantity" />
+    <result column="order_detail_sku_price" jdbcType="DOUBLE" property="price" />
+    <result column="order_detail_sku_amount" jdbcType="DOUBLE" property="amount" />
+    <result column="order_detail_sku_created_at" jdbcType="TIMESTAMP" property="createdAt" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    order_detail_sku.id as order_detail_sku_id, order_detail_sku.order_detail_id as order_detail_sku_order_detail_id,
+    order_detail_sku.sku_id as order_detail_sku_sku_id, order_detail_sku.sku_name as order_detail_sku_sku_name,
+    order_detail_sku.quantity as order_detail_sku_quantity, order_detail_sku.price as order_detail_sku_price,
+    order_detail_sku.amount as order_detail_sku_amount, order_detail_sku.created_at as order_detail_sku_created_at
+  </sql>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from order_detail_skus order_detail_sku
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from order_detail_skus
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+
+  <insert id="insert" parameterType="com.harmoni.pos.order.model.OrderDetailSku">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into order_detail_skus (order_detail_id, sku_id, sku_name,
+      quantity, price, amount, 
+      created_at)
+    values (#{orderDetailId,jdbcType=INTEGER}, #{skuId,jdbcType=INTEGER}, #{skuName,jdbcType=VARCHAR}, 
+      #{quantity,jdbcType=INTEGER}, #{price,jdbcType=DOUBLE}, #{amount,jdbcType=DOUBLE}, 
+      #{createdAt,jdbcType=TIMESTAMP})
+  </insert>
+
+  <update id="updateByPrimaryKey" parameterType="com.harmoni.pos.order.model.OrderDetailSku">
+    update order_detail_skus
+    set order_detail_id = #{orderDetailId,jdbcType=INTEGER},
+      sku_id = #{skuId,jdbcType=INTEGER},
+      sku_name = #{skuName,jdbcType=VARCHAR},
+      quantity = #{quantity,jdbcType=INTEGER},
+      price = #{price,jdbcType=DOUBLE},
+      amount = #{amount,jdbcType=DOUBLE},
+      created_at = #{createdAt,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>

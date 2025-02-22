@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.harmoni.pos.order.mapper.OrderDetailMapper">
+  <resultMap id="BaseResultMap" type="com.harmoni.pos.order.model.OrderDetail">
+    <id column="order_detail_id" jdbcType="INTEGER" property="id" />
+    <result column="order_detail_order_id" jdbcType="INTEGER" property="orderId" />
+    <result column="order_detail_product_id" jdbcType="INTEGER" property="productId" />
+    <result column="order_detail_product_name" jdbcType="VARCHAR" property="productName" />
+    <result column="order_detail_amount" jdbcType="DECIMAL" property="amount" />
+    <result column="order_detail_created_at" jdbcType="TIMESTAMP" property="createdAt" />
+    <result column="order_detail_updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    order_detail.id as order_detail_id, order_detail.order_id as order_detail_order_id,
+    order_detail.product_id as order_detail_product_id, order_detail.product_name as order_detail_product_name,
+    order_detail.amount as order_detail_amount, order_detail.created_at as order_detail_created_at,
+    order_detail.updated_at as order_detail_updated_at
+  </sql>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select 
+    <include refid="Base_Column_List" />
+    from order_details order_detail
+    where order_detail.id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+    delete from order_details
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+
+  <insert id="insert" parameterType="com.harmoni.pos.order.model.OrderDetail">
+    <selectKey keyProperty="id" order="AFTER" resultType="java.lang.Integer">
+      SELECT LAST_INSERT_ID()
+    </selectKey>
+    insert into order_details (order_id, product_id, product_name, amount, created_at, updated_at)
+    values (#{orderId,jdbcType=INTEGER}, #{productId,jdbcType=INTEGER}, #{productName,jdbcType=VARCHAR},
+      #{amount,jdbcType=DECIMAL}, #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP})
+  </insert>
+
+  <update id="updateByPrimaryKey" parameterType="com.harmoni.pos.order.model.OrderDetail">
+    update order_details
+    set order_id = #{orderId,jdbcType=INTEGER},
+      product_id = #{productId,jdbcType=INTEGER},
+      product_name = #{productName,jdbcType=VARCHAR},
+      amount = #{amount,jdbcType=DECIMAL},
+      created_at = #{createdAt,jdbcType=TIMESTAMP},
+      updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+</mapper>
