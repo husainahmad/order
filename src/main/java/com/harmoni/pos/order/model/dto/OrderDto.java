@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.harmoni.pos.order.model.Order;
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -15,6 +16,7 @@ public class OrderDto {
     private Integer customerId;
     private String customerName;
     private Integer storeServiceTypesId;
+    private BigDecimal discount;
     private String remark;
 
     @JsonProperty("orderDetails")

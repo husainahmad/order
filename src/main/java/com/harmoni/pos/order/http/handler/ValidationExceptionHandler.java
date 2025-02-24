@@ -40,7 +40,6 @@ public class ValidationExceptionHandler {
                 .data(null)
                 .error(errors)
                 .build();
-
         log.warn("Validation: {}", e.getMessage());
 
         return new ResponseEntity<>(genericResponse, HttpStatus.BAD_REQUEST);

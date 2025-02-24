@@ -1,23 +1,22 @@
-package com.harmoni.pos.order.model;
+package com.harmoni.pos.order.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
-import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 @Data
 @Accessors(chain = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class OrderDetail {
+public class CategoryDto {
+
     private Integer id;
-    private Integer orderId;
-    private Integer productId;
-    private String productName;
-    private List<OrderDetailSku> orderDetailSkus;
-    private BigDecimal amount;
+    private String name;
+    private String description;
+    private Integer brandId;
     private Date createdAt;
     private Date updatedAt;
+    private Date deletedAt;
+
 }

@@ -23,24 +23,16 @@ public class OrderController {
     @PostMapping("")
     public ResponseEntity<RestAPIResponse> createOrder(@Valid @RequestBody OrderDto orderDto,
                                                     @RequestHeader("Authorization") String authHeader) throws Exception {
-        orderBusinessService.test(orderDto);
-
-        return new ResponseEntity<>(RestAPIResponse.builder().build(), HttpStatus.CREATED);
+        RestAPIResponse restAPIResponse = RestAPIResponse.builder()
+                .data(orderBusinessService.calculate(orderDto, authHeader.substring(7)))
+                .build();
+        return new ResponseEntity<>(restAPIResponse, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<RestAPIResponse> updateOrder(@PathVariable Integer id, @RequestBody OrderDto orderDto) {
 
         return new ResponseEntity<>(RestAPIResponse.builder().build(), HttpStatus.OK);
-    }
-
-    @GetMapping("")
-    public ResponseEntity<RestAPIResponse> gets(@RequestHeader("Authorization") String authHeader)  {
-        RestAPIResponse restAPIResponse = RestAPIResponse.builder()
-                .httpStatus(HttpStatus.OK.value())
-                .data(orderBusinessService.gets())
-                .build();
-        return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
     }
 
 }

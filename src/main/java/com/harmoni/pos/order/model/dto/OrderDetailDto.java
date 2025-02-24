@@ -10,13 +10,11 @@ public class OrderDetailDto {
     private Integer id;
     private Integer orderId;
     private Integer productId;
-    private String productName;
     private String remark;
     private List<OrderDetailSkuDto> orderDetailSkus;
 
     public OrderDetail toOrderDetail() {
         return new OrderDetail().setOrderId(orderId)
-                .setProductId(productId)
-                .setProductName(productName);
+                .setProductId(productId);
     }
 }

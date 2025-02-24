@@ -3,6 +3,8 @@ package com.harmoni.pos.order.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
+
+import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
@@ -14,7 +16,7 @@ public class OrderDetailSku {
     private Integer skuId;
     private String skuName;
     private Integer quantity;
-    private Double price;
-    private Double amount;
+    private BigDecimal price;
+    private BigDecimal amount;
     private Date createdAt;
 }
