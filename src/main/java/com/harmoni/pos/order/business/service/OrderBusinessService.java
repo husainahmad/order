@@ -2,14 +2,17 @@ package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.dto.OrderDto;
-import com.harmoni.pos.order.model.dto.StoreDto;
+
+import java.util.List;
 
 public interface OrderBusinessService {
-    StoreDto getStoreDetail(Integer id, String authHeader);
-    Order calculateSubtotal(Order order);
-    Order calculateServiceCharge(Order order);
-    Order calculateDiscount(Order order, OrderDto orderDto);
-    Order calculateTax(Order order, OrderDto orderDto);
-    Order calculateGrandTotal(Order order);
-    Order calculate(OrderDto orderDto, String authHeader);
+    void calculateSubtotal(Order order);
+    void calculateServiceCharge(Order order);
+    void calculateDiscount(Order order, OrderDto orderDto);
+    void calculateTax(Order order, OrderDto orderDto);
+    void calculateGrandTotal(Order order);
+    Order calculate(OrderDto orderDto, String token);
+    Order confirm(OrderDto orderDto, String token);
+    Order print(OrderDto orderDto, String token);
+    List<Order> getDailyListByStore(String token);
 }

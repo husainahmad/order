@@ -5,6 +5,8 @@ import com.harmoni.pos.order.model.OrderDetailSku;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @RequiredArgsConstructor
 @Service("orderDetailSkuService")
 public class OrderDetailSkuServiceImpl implements OrderDetailSkuService {
@@ -19,6 +21,11 @@ public class OrderDetailSkuServiceImpl implements OrderDetailSkuService {
     @Override
     public int insert(OrderDetailSku row) {
         return orderDetailSkuMapper.insert(row);
+    }
+
+    @Override
+    public void insertBulk(List<OrderDetailSku> orderDetailSkus) {
+        orderDetailSkuMapper.insertBulk(orderDetailSkus);
     }
 
     @Override

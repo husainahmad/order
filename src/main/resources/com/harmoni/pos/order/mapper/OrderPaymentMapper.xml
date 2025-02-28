@@ -3,23 +3,25 @@
 <mapper namespace="com.harmoni.pos.order.mapper.OrderPaymentMapper">
 
   <resultMap id="BaseResultMap" type="com.harmoni.pos.order.model.OrderPayment">
-    <id column="id" jdbcType="INTEGER" property="id" />
-    <result column="order_id" jdbcType="INTEGER" property="orderId" />
-    <result column="payment_id" jdbcType="INTEGER" property="paymentId" />
-    <result column="amount" jdbcType="DECIMAL" property="amount" />
-    <result column="created_at" jdbcType="TIMESTAMP" property="createdAt" />
-    <result column="updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+    <id column="order_payment_id" jdbcType="INTEGER" property="id" />
+    <result column="order_payment_order_id" jdbcType="INTEGER" property="orderId" />
+    <result column="order_payment_payment_id" jdbcType="INTEGER" property="paymentId" />
+    <result column="order_payment_amount" jdbcType="DECIMAL" property="amount" />
+    <result column="order_payment_created_at" jdbcType="TIMESTAMP" property="createdAt" />
+    <result column="order_payment_updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
   </resultMap>
 
   <sql id="Base_Column_List">
-    id, order_id, payment_id, amount, created_at, updated_at
+    order_payment.id as order_payment_id, order_payment.order_id as order_payment_order_id,
+    order_payment.payment_id as order_payment_payment_id, order_payment.amount as order_payment_amount,
+    order_payment.created_at as order_payment_created_at, order_payment.updated_at as order_payment_updated_at
   </sql>
 
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select 
     <include refid="Base_Column_List" />
-    from order_payments
-    where id = #{id,jdbcType=INTEGER}
+    from order_payments order_payment
+    where order_payment.id = #{id,jdbcType=INTEGER}
   </select>
 
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">

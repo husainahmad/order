@@ -13,9 +13,12 @@
     <result column="o_customer_id" jdbcType="INTEGER" property="customerId" />
     <result column="o_customer_name" jdbcType="VARCHAR" property="customerName" />
     <result column="o_status" jdbcType="VARCHAR" property="status" />
+    <result column="o_remark" jdbcType="VARCHAR" property="remark" />
     <result column="o_store_service_types_id" jdbcType="INTEGER" property="storeServiceTypesId" />
     <result column="o_created_at" jdbcType="TIMESTAMP" property="createdAt" />
     <result column="o_updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+    <association property="orderPayment" resultMap="com.harmoni.pos.order.mapper.OrderPaymentMapper.BaseResultMap"/>
+    <collection property="orderDetails" resultMap="com.harmoni.pos.order.mapper.OrderDetailMapper.BaseResultMap"/>
   </resultMap>
 
   <sql id="Base_Column_List">
@@ -24,22 +27,35 @@
     o.tax_total as o_tax_total, o.store_id as o_store_id,
     o.store_service_types_id as o_store_service_types_id,
     o.customer_id as o_customer_id, o.customer_name as o_customer_name,
-    o.status as o_status,
+    o.status as o_status, o.remark as o_remark,
     o.created_at as o_created_at, o.updated_at as o_updated_at
   </sql>
 
   <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
-    select 
-    <include refid="Base_Column_List" />
+    select
+    <include refid="Base_Column_List" />,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailMapper.Base_Column_List"/>,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailSkuMapper.Base_Column_List"/>
     from orders o
+    left join order_details order_detail on o.id = order_detail.order_id
+    left join order_detail_skus order_detail_sku on order_detail.id = order_detail_sku.order_detail_id
     where o.id = #{id,jdbcType=INTEGER}
   </select>
 
   <select id="selectByStoreId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
     select
-    <include refid="Base_Column_List" />
+    <include refid="Base_Column_List" />,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailMapper.Base_Column_List"/>,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailSkuMapper.Base_Column_List"/>,
+    <include refid="com.harmoni.pos.order.mapper.OrderPaymentMapper.Base_Column_List"/>
     from orders o
+    left join order_details order_detail on o.id = order_detail.order_id
+    left join order_detail_skus order_detail_sku on order_detail.id = order_detail_sku.order_detail_id
+    left join order_payments order_payment on order_payment.order_id = o.id
     where o.store_id = #{storeId,jdbcType=INTEGER}
+    and o.created_at between #{from,javaType=java.sql.Timestamp,jdbcType=TIMESTAMP}
+      and #{until,javaType=java.sql.Timestamp,jdbcType=TIMESTAMP}
+    order by o.id desc
   </select>
 
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
@@ -53,12 +69,13 @@
     </selectKey>
     insert into orders (order_no, sub_total, discount_total,
       grand_total, tax_total, store_id, 
-      store_service_types_id, customer_id, customer_name, status,
+      store_service_types_id, customer_id, customer_name, status, remark,
       created_at, updated_at
       )
     values (#{orderNo,jdbcType=VARCHAR}, #{subTotal,jdbcType=DOUBLE}, #{discountTotal,jdbcType=DOUBLE}, 
-      #{grandTotal,jdbcType=DOUBLE}, #{taxTotal,jdbcType=DOUBLE}, #{storeId,jdbcType=INTEGER},
-      #{storeServiceTypesId,jdbcType=INTEGER}, #{customerId,jdbcType=INTEGER}, #{customerName,jdbcType=VARCHAR}, #{status,jdbcType=VARCHAR},
+      #{grandTotal,jdbcType=DOUBLE}, #{taxTotal,jdbcType=DOUBLE}, #{store.id,jdbcType=INTEGER},
+      #{storeServiceTypesId,jdbcType=INTEGER}, #{customerId,jdbcType=INTEGER}, #{customerName,jdbcType=VARCHAR},
+      #{status,jdbcType=VARCHAR}, #{remark,jdbcType=VARCHAR},
       #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP}
       )
   </insert>

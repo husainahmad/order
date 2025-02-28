@@ -9,10 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -21,6 +18,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
 
     private final OrderDetailMapper orderDetailMapper;
     private final MenuService menuService;
+    private final OrderDetailSkuService orderDetailSkuService;
 
     @Override
     public int deleteByPrimaryKey(Integer id) {
@@ -30,6 +28,21 @@ public class OrderDetailServiceImpl implements OrderDetailService {
     @Override
     public int insert(OrderDetail row) {
         return orderDetailMapper.insert(row);
+    }
+
+    @Override
+    public void insertBulk(List<OrderDetail> orderDetails) {
+        orderDetailMapper.insertBulk(orderDetails);
+
+        List<OrderDetailSku> orderDetailSkus = new ArrayList<>();
+        for (OrderDetail orderDetail: orderDetails) {
+            for (OrderDetailSku orderDetailSku: orderDetail.getOrderDetailSkus()) {
+                orderDetailSku.setOrderDetailId(orderDetail.getId());
+                orderDetailSku.setCreatedAt(new Date(System.currentTimeMillis()));
+                orderDetailSkus.add(orderDetailSku);
+            }
+        }
+        orderDetailSkuService.insertBulk(orderDetailSkus);
     }
 
     @Override

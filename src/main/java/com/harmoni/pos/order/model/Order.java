@@ -28,6 +28,8 @@ public class Order {
     private Integer storeServiceTypesId;
     private List<OrderDetail> orderDetails;
     private OrderStatus status;
+    private OrderPayment orderPayment;
+    private String remark;
     private Date createdAt;
     private Date updatedAt;
 }

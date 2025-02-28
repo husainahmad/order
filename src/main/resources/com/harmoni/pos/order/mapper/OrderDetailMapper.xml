@@ -10,6 +10,7 @@
     <result column="order_detail_amount" jdbcType="DECIMAL" property="amount" />
     <result column="order_detail_created_at" jdbcType="TIMESTAMP" property="createdAt" />
     <result column="order_detail_updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+    <collection property="orderDetailSkus" resultMap="com.harmoni.pos.order.mapper.OrderDetailSkuMapper.BaseResultMap"/>
   </resultMap>
 
   <sql id="Base_Column_List">
@@ -40,6 +41,15 @@
       #{amount,jdbcType=DECIMAL}, #{createdAt,jdbcType=TIMESTAMP}, #{updatedAt,jdbcType=TIMESTAMP})
   </insert>
 
+  <insert id="insertBulk" useGeneratedKeys="true" keyProperty="id">
+    insert into order_details (order_id, product_id, product_name, amount, created_at, updated_at) values
+    <foreach collection="orderDetails" item="orderDetail" separator=",">
+      (#{orderDetail.orderId,jdbcType=INTEGER}, #{orderDetail.productId,jdbcType=INTEGER},
+      #{orderDetail.productName,jdbcType=VARCHAR}, #{orderDetail.amount,jdbcType=DECIMAL},
+      #{orderDetail.createdAt,jdbcType=TIMESTAMP}, #{orderDetail.updatedAt,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
+
   <update id="updateByPrimaryKey" parameterType="com.harmoni.pos.order.model.OrderDetail">
     update order_details
     set order_id = #{orderId,jdbcType=INTEGER},
@@ -50,4 +60,5 @@
       updated_at = #{updatedAt,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
 </mapper>

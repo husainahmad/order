@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harmoni.pos.order.business.service.rest.RestClientService;
 import com.harmoni.pos.order.http.response.RestAPIResponse;
-import com.harmoni.pos.order.model.dto.StoreDto;
 import com.harmoni.pos.order.model.dto.ProductDto;
 import com.harmoni.pos.order.model.dto.SkuDto;
 import lombok.RequiredArgsConstructor;
@@ -30,9 +29,6 @@ public class MenuService implements Serializable {
 
     @Value("${menu.url.product}")
     private String urlProduct;
-
-    @Value("${menu.url.store}")
-    private String urlStore;
 
     private final ObjectMapper objectMapper = new ObjectMapper()
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
@@ -68,17 +64,6 @@ public class MenuService implements Serializable {
         return Optional.ofNullable(restAPIResponse)
                 .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<List<ProductDto>>() {}))
                 .orElse(List.of());
-    }
-
-    public StoreDto getStoreDetail(Integer storeId, String token) {
-        String finalUrl = UriComponentsBuilder.fromHttpUrl(urlStore.concat("/").concat(String.valueOf(storeId)))
-                .toUriString();
-
-        RestAPIResponse restAPIResponse = restClientService.get(token, finalUrl).block();
-
-        return Optional.ofNullable(restAPIResponse)
-                .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<StoreDto>() {}))
-                .orElseThrow();
     }
 
 }

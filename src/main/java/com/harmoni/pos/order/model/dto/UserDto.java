@@ -4,13 +4,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.util.Date;
+
 @Data
 @Accessors(chain = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class StoreDto {
-
+public class UserDto {
     private Integer id;
-    private String name;
-    private String address;
-    private String timeZone;
+    private Integer authId;
+    private String username;
+    private Integer storeId;
+    private StoreDto store;
+
+    private Date createdAt;
+    private Date updatedAt;
+    private Date deletedAt;
 }

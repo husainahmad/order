@@ -9,10 +9,11 @@ import java.util.List;
 
 public interface OrderDetailService {
     int deleteByPrimaryKey(Integer id);
-    int insert(OrderDetail row);
+    int insert(OrderDetail orderDetail);
+    void insertBulk(List<OrderDetail> orderDetails);
     OrderDetail selectByPrimaryKey(Integer id);
     List<OrderDetail> populateOrderDetail(List<OrderDetailDto> orderDetailDtos, String token);
     List<SkuDto> getDetailSkuWithPrice(List<OrderDetailDto> orderDetailDtos, String token);
     List<ProductDto> getProductWithName(List<OrderDetailDto> orderDetailDtos, String token);
-    int updateByPrimaryKey(OrderDetail row);
+    int updateByPrimaryKey(OrderDetail orderDetail);
 }

@@ -11,8 +11,6 @@ import java.util.List;
 @Data
 public class OrderDto {
 
-    private Integer storeId;
-    private String storeName;
     private Integer customerId;
     private String customerName;
     private Integer storeServiceTypesId;
@@ -26,7 +24,7 @@ public class OrderDto {
         return new Order()
                 .setCustomerId(customerId)
                 .setCustomerName(customerName)
-                .setStoreId(storeId)
+                .setRemark(remark)
                 .setStoreServiceTypesId(storeServiceTypesId);
     }
 }

@@ -17,8 +17,8 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     }
 
     @Override
-    public int insert(OrderPayment row) {
-        return orderPaymentMapper.insert(row);
+    public int insert(OrderPayment orderPayment) {
+        return orderPaymentMapper.insert(orderPayment);
     }
 
     @Override
@@ -27,7 +27,7 @@ public class OrderPaymentServiceImpl implements OrderPaymentService {
     }
 
     @Override
-    public int updateByPrimaryKey(OrderPayment row) {
-        return orderPaymentMapper.updateByPrimaryKey(row);
+    public int updateByPrimaryKey(OrderPayment orderPayment) {
+        return orderPaymentMapper.updateByPrimaryKey(orderPayment);
     }
 }

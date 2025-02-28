@@ -44,6 +44,16 @@
       #{createdAt,jdbcType=TIMESTAMP})
   </insert>
 
+  <insert id="insertBulk" useGeneratedKeys="true" keyProperty="id">
+    insert into order_detail_skus (order_detail_id, sku_id, sku_name, quantity, price, amount, created_at) values
+    <foreach collection="orderDetailSkus" item="orderDetailSku" separator=",">
+      (#{orderDetailSku.orderDetailId,jdbcType=INTEGER}, #{orderDetailSku.skuId,jdbcType=INTEGER},
+      #{orderDetailSku.skuName,jdbcType=VARCHAR}, #{orderDetailSku.quantity,jdbcType=INTEGER},
+      #{orderDetailSku.price,jdbcType=DOUBLE}, #{orderDetailSku.amount,jdbcType=DOUBLE},
+      #{orderDetailSku.createdAt,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
+
   <update id="updateByPrimaryKey" parameterType="com.harmoni.pos.order.model.OrderDetailSku">
     update order_detail_skus
     set order_detail_id = #{orderDetailId,jdbcType=INTEGER},
