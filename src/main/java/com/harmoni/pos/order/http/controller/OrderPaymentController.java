@@ -10,6 +10,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * REST controller for handling order payment-related operations in the POS system.
+ * <p>
+ * Exposes endpoints for clients to process order payments.
+ * </p>
+ */
 @RequiredArgsConstructor
 @RestController
 @Slf4j
@@ -18,6 +24,17 @@ public class OrderPaymentController {
 
     private final OrderPaymentBusinessService orderPaymentBusinessService;
 
+    /**
+     * Processes payment for an order.
+     * <p>
+     * Expects a valid {@link OrderPaymentDto} payload and an Authorization header with a Bearer token.
+     * The token is passed to the business service for authentication and processing.
+     * </p>
+     *
+     * @param orderPaymentDto the payment details for the order
+     * @param authHeader      the Authorization header containing a Bearer token
+     * @return a {@link ResponseEntity} containing a {@link RestAPIResponse} with the result of the payment processing
+     */
     @PutMapping("")
     public ResponseEntity<RestAPIResponse> payOrder(@Valid @RequestBody OrderPaymentDto orderPaymentDto,
                                                     @RequestHeader("Authorization") String authHeader) {

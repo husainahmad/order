@@ -18,6 +18,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Service class responsible for fetching menu-related data such as SKUs with prices and products with names.
+ * <p>
+ * It communicates with external services via {@link RestClientService} and deserializes
+ * the responses into DTOs using Jackson's {@link ObjectMapper}.
+ * </p>
+ */
 @RequiredArgsConstructor
 @Service("menuService")
 public class MenuService implements Serializable {
@@ -34,6 +41,13 @@ public class MenuService implements Serializable {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
+    /**
+     * Retrieves a list of {@link SkuDto} including price information for the given list of SKU IDs.
+     *
+     * @param ids   a list of SKU ID integers
+     * @param token the bearer token used for authorization
+     * @return a list of {@link SkuDto} with price data, or an empty list if no data is returned
+     */
     public List<SkuDto> getSkusWithPrice(List<Integer> ids, String token) {
         String encodedIds = ids.stream()
                 .map(String::valueOf)
@@ -50,6 +64,13 @@ public class MenuService implements Serializable {
                 .orElse(List.of());
     }
 
+    /**
+     * Retrieves a list of {@link ProductDto} with name and metadata for the given product IDs.
+     *
+     * @param ids   a list of product ID integers
+     * @param token the bearer token used for authorization
+     * @return a list of {@link ProductDto} with names and attributes, or an empty list if no data is returned
+     */
     public List<ProductDto> getProductWithName(List<Integer> ids, String token) {
         String encodedIds = ids.stream()
                 .map(String::valueOf)
@@ -65,5 +86,4 @@ public class MenuService implements Serializable {
                 .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<List<ProductDto>>() {}))
                 .orElse(List.of());
     }
-
 }

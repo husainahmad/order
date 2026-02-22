@@ -16,6 +16,8 @@ public class OrderDetail {
     private Integer orderId;
     private Integer productId;
     private String productName;
+    private Integer categoryId;
+    private String categoryName;
     private List<OrderDetailSku> orderDetailSkus;
     private BigDecimal amount;
     private Date createdAt;

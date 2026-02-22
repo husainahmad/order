@@ -12,5 +12,5 @@ public interface OrderService {
     Order selectByPrimaryKey(Integer id);
     List<Order> selectByStoreId(Integer storeId, Timestamp from, Timestamp until);
     int updateByPrimaryKey(Order order);
-
+    int voidOrderById(Order order);
 }

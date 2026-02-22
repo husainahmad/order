@@ -95,4 +95,12 @@
       updated_at = #{updatedAt,jdbcType=TIMESTAMP}
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <update id="voidById" parameterType="com.harmoni.pos.order.model.Order">
+    update orders
+    set status = #{status,jdbcType=VARCHAR},
+    updated_at = #{updatedAt,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
 </mapper>

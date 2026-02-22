@@ -15,6 +15,10 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 
+/**
+ * Implementation of {@link OrderPaymentBusinessService} that handles
+ * business logic related to processing order payments.
+ */
 @RequiredArgsConstructor
 @Service("orderPaymentBusinessService")
 public class OrderPaymentBusinessServiceImpl implements OrderPaymentBusinessService {
@@ -24,6 +28,19 @@ public class OrderPaymentBusinessServiceImpl implements OrderPaymentBusinessServ
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    /**
+     * Processes a payment for a given order:
+     * <ul>
+     *   <li>Validates the store ownership using the JWT token</li>
+     *   <li>Updates the order status to {@link OrderStatus#PAID}</li>
+     *   <li>Creates and persists an {@link OrderPayment}</li>
+     * </ul>
+     *
+     * @param paymentDto the DTO containing payment information
+     * @param token the JWT token used for authentication and authorization
+     * @return the updated {@link Order} object, including its payment
+     * @throws BusinessUnAuthorizedRequestException if the user does not belong to the same store
+     */
     @Override
     public Order processPayment(OrderPaymentDto paymentDto, String token) {
         Order order = orderService.selectByPrimaryKey(paymentDto.getOrderId());

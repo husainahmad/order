@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.harmoni.pos.order.mapper.ReportMapper">
+    <resultMap id="SettlementReportMap" type="com.harmoni.pos.order.model.SettlementReport">
+        <result property="totalOrders" column="total_orders"/>
+        <result property="totalSales" column="total_sales"/>
+        <result property="totalDiscounts" column="total_discounts"/>
+        <result property="totalTax" column="total_tax"/>
+        <result property="totalNetSales" column="total_net_sales"/>
+        <result property="totalRefunds" column="total_refunds"/>
+    </resultMap>
+
+    <select id="getSettlementReport" resultMap="SettlementReportMap">
+        SELECT
+        COUNT(*) AS total_orders,
+        SUM(grand_total) AS total_sales,
+        SUM(discount_total) AS total_discounts,
+        SUM(tax_total) AS total_tax,
+        SUM(grand_total - discount_total + tax_total) AS total_net_sales,
+        (SELECT SUM(grand_total) FROM orders WHERE status = 'REFUNDED' AND created_at BETWEEN #{start} AND #{end}) AS total_refunds
+        FROM orders
+        WHERE created_at BETWEEN #{start} AND #{end}
+        AND status = 'PAID'
+    </select>
+
+    <select id="getPaymentBreakdown" resultType="com.harmoni.pos.order.model.PaymentSummary">
+        SELECT
+        p.name AS paymentType,
+        SUM(op.amount) AS totalAmount
+        FROM order_payments op
+        JOIN payments p ON op.payment_id = p.id
+        JOIN orders o ON op.order_id = o.id
+        WHERE o.created_at BETWEEN #{start} AND #{end}
+        AND o.status = 'PAID'
+        GROUP BY p.name
+    </select>
+
+    <select id="getTopProducts" resultType="com.harmoni.pos.order.model.TopProductReport">
+        SELECT
+            od.product_id,
+            od.product_name,
+            SUM(od.amount) AS total_sales,
+            SUM(od.quantity) AS quantity_sold
+        FROM order_details od
+            JOIN orders o ON od.order_id = o.id
+        WHERE o.store_id = #{storeId}
+            AND od.created_at BETWEEN #{start} AND #{end}
+            GROUP BY od.product_id, od.product_name
+            ORDER BY quantity_sold DESC
+            LIMIT #{limit}
+    </select>
+
+</mapper>

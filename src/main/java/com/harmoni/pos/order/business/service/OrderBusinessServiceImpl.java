@@ -14,11 +14,16 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 import static com.harmoni.pos.order.utils.DateTimeUtils.getDailyTimeRange;
 
+/**
+ * Implementation of {@link OrderBusinessService} that handles business logic
+ * related to processing orders including calculations, confirmation, and retrieval.
+ */
 @RequiredArgsConstructor
 @Service("orderBusinessService")
 public class OrderBusinessServiceImpl implements OrderBusinessService {
@@ -28,20 +33,37 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    /**
+     * Calculates the subtotal of the order based on the sum of its order detail amounts.
+     *
+     * @param order the order to calculate
+     */
     @Override
     public void calculateSubtotal(Order order) {
         BigDecimal subTotal = order.getOrderDetails().stream()
                 .map(orderDetail -> Optional.ofNullable(orderDetail.getAmount()).orElse(BigDecimal.ZERO))
-                .reduce(BigDecimal.ZERO, BigDecimal::add); // Sum all amounts
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         order.setSubTotal(subTotal);
     }
 
+    /**
+     * Sets the service charge for the order.
+     * Currently set to zero; implement custom logic if applicable.
+     *
+     * @param order the order to calculate
+     */
     @Override
     public void calculateServiceCharge(Order order) {
         // TODO: Implement service charge calculation if applicable
         order.setServiceChargeTotal(BigDecimal.ZERO);
     }
 
+    /**
+     * Sets the discount amount for the order.
+     *
+     * @param order     the order to update
+     * @param orderDto  the input DTO containing the discount value
+     */
     @Override
     public void calculateDiscount(Order order, OrderDto orderDto) {
         BigDecimal discount = Optional.ofNullable(orderDto.getDiscount()).orElse(BigDecimal.ZERO);
@@ -49,12 +71,24 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         calculateGrandTotal(order);
     }
 
+    /**
+     * Sets the tax amount for the order.
+     * Currently set to zero; implement custom logic if applicable.
+     *
+     * @param order     the order to update
+     * @param orderDto  the input DTO
+     */
     @Override
     public void calculateTax(Order order, OrderDto orderDto) {
         // TODO: Implement tax calculation logic if required
         order.setTaxTotal(BigDecimal.ZERO);
     }
 
+    /**
+     * Calculates the grand total based on subtotal, discount, tax, and service charge.
+     *
+     * @param order the order to update
+     */
     @Override
     public void calculateGrandTotal(Order order) {
         BigDecimal subTotal = Optional.ofNullable(order.getSubTotal()).orElse(BigDecimal.ZERO);
@@ -66,6 +100,13 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         order.setGrandTotal(grandTotal);
     }
 
+    /**
+     * Converts {@link OrderDto} into {@link Order} and performs all business calculations.
+     *
+     * @param orderDto   the DTO containing order details
+     * @param token      JWT token used to get user/store context
+     * @return the calculated {@link Order}
+     */
     @Override
     public Order calculate(OrderDto orderDto, String token) {
         Order order = orderDto.toOrder();
@@ -84,6 +125,13 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         return order;
     }
 
+    /**
+     * Confirms and persists a new order after performing calculations.
+     *
+     * @param orderDto the order input DTO
+     * @param token    JWT token
+     * @return the confirmed and persisted order
+     */
     @Override
     public Order confirm(OrderDto orderDto, String token) {
         Order order = calculate(orderDto, token);
@@ -92,11 +140,41 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         return order;
     }
 
+    /**
+     * Performs calculations for order printing (e.g., before sending to a printer).
+     * Does not persist the order.
+     *
+     * @param orderDto the order input DTO
+     * @param token    JWT token
+     * @return the calculated order
+     */
     @Override
     public Order print(OrderDto orderDto, String token) {
         return calculate(orderDto, token);
     }
 
+    /**
+     * Voids an order by setting its status to {@link OrderStatus#VOID}.
+     *
+     * @param orderId the ID of the order to void
+     * @param token   JWT token
+     * @return the updated order
+     */
+    @Override
+    public Order voidOrder(Integer orderId, String token) {
+        Order order = orderService.selectByPrimaryKey(orderId);
+        order.setStatus(OrderStatus.VOID);
+        order.setUpdatedAt(new Date(System.currentTimeMillis()));
+        orderService.voidOrderById(order);
+        return order;
+    }
+
+    /**
+     * Retrieves the list of orders for the current day based on the authenticated store.
+     *
+     * @param token JWT token
+     * @return list of today's orders for the store
+     */
     @Override
     public List<Order> getDailyListByStore(String token) {
         UserDto userDto = userService.getUserDetail(jwtUtil.extractUsername(token), token);

@@ -15,6 +15,13 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.Serializable;
 import java.util.Optional;
 
+/**
+ * Service for retrieving user details from an external user management API.
+ * <p>
+ * This service uses a reactive HTTP client to call the user API, and deserializes
+ * the JSON response into a {@link UserDto} object.
+ * </p>
+ */
 @RequiredArgsConstructor
 @Service("userService")
 public class UserService implements Serializable {
@@ -28,6 +35,14 @@ public class UserService implements Serializable {
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
+    /**
+     * Fetches user detail by username from the external service.
+     *
+     * @param username the username of the user to retrieve
+     * @param token    the bearer token used for authentication in the request
+     * @return the {@link UserDto} containing user details
+     * @throws java.util.NoSuchElementException if the user response is null or cannot be parsed
+     */
     public UserDto getUserDetail(String username, String token) {
         String finalUrl = UriComponentsBuilder.fromHttpUrl(urlUser.concat("/").concat(username))
                 .toUriString();
@@ -38,5 +53,4 @@ public class UserService implements Serializable {
                 .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<UserDto>() {}))
                 .orElseThrow();
     }
-
 }
