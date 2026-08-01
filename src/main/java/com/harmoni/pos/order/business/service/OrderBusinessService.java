@@ -58,43 +58,43 @@ public interface OrderBusinessService {
      * Populates store, customer, order number, details, and all totals.
      *
      * @param orderDto the DTO containing the incoming order data
-     * @param token    JWT token used for fetching user/store context
+     * @param username the username used for fetching user/store context
      * @return the fully calculated {@link Order}
      */
-    Order calculate(OrderDto orderDto, String token);
+    Order calculate(OrderDto orderDto, String username);
 
     /**
      * Finalizes and persists the given order as a confirmed order.
      *
      * @param orderDto the DTO containing the order data to confirm
-     * @param token    JWT token used for user/store validation
+     * @param username the username used for user/store validation
      * @return the confirmed {@link Order}
      */
-    Order confirm(OrderDto orderDto, String token);
+    Order confirm(OrderDto orderDto, String username);
 
     /**
      * Prepares an order for printing purposes without saving it.
      *
      * @param orderDto the DTO containing the order data
-     * @param token    JWT token used for user/store validation
+     * @param username the username used for user/store validation
      * @return the prepared {@link Order} with totals populated
      */
-    Order print(OrderDto orderDto, String token);
+    Order print(OrderDto orderDto, String username);
 
     /**
      * Marks an order as void (canceled).
      *
-     * @param orderId the ID of the order to void
-     * @param token   JWT token used for authorization
+     * @param orderId  the ID of the order to void
+     * @param username the username used for authorization
      * @return the voided {@link Order}
      */
-    Order voidOrder(Integer orderId, String token);
+    Order voidOrder(Integer orderId, String username);
 
     /**
      * Retrieves a list of confirmed orders for the current store for the current day.
      *
-     * @param token JWT token used to determine the store and time zone
+     * @param username the username used to determine the store and time zone
      * @return a list of today's orders for the store
      */
-    List<Order> getDailyListByStore(String token);
+    List<Order> getDailyListByStore(String username);
 }

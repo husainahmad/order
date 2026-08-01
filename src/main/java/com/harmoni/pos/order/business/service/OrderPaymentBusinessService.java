@@ -20,10 +20,10 @@ public interface OrderPaymentBusinessService {
      * </ul>
      *
      * @param paymentDto the payment details including the order ID and method
-     * @param token      JWT token used to authenticate and authorize the user
+     * @param username   the username used to authenticate and authorize the user
      * @return the updated {@link Order} with payment information
      * @throws com.harmoni.pos.order.exception.BusinessUnAuthorizedRequestException
      *         if the order does not belong to the authenticated user's store
      */
-    Order processPayment(OrderPaymentDto paymentDto, String token);
+    Order processPayment(OrderPaymentDto paymentDto, String username);
 }

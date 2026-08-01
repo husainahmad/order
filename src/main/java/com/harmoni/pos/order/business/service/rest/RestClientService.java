@@ -57,17 +57,15 @@ public class RestClientService implements Serializable {
     }
 
     /**
-     * Sends a GET request to the given URL with the authorization token.
+     * Sends a GET request to the given URL.
      *
-     * @param token JWT token for authorization
-     * @param url   Target URL
+     * @param url Target URL
      * @return Mono emitting {@link RestAPIResponse}
      */
-    public Mono<RestAPIResponse> get(String token, String url) {
+    public Mono<RestAPIResponse> get(String url) {
         WebClient.ResponseSpec retrieve = webClient.get()
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header(HttpHeaders.AUTHORIZATION, BEARER.concat(token))
                 .retrieve();
 
         retrieve.onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent);

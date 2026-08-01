@@ -27,19 +27,18 @@ public class OrderPaymentController {
     /**
      * Processes payment for an order.
      * <p>
-     * Expects a valid {@link OrderPaymentDto} payload and an Authorization header with a Bearer token.
-     * The token is passed to the business service for authentication and processing.
+     * Expects a valid {@link OrderPaymentDto} payload and an X-Username header identifying the user.
      * </p>
      *
      * @param orderPaymentDto the payment details for the order
-     * @param authHeader      the Authorization header containing a Bearer token
+     * @param username        the username extracted from the X-Username header
      * @return a {@link ResponseEntity} containing a {@link RestAPIResponse} with the result of the payment processing
      */
     @PutMapping("")
     public ResponseEntity<RestAPIResponse> payOrder(@Valid @RequestBody OrderPaymentDto orderPaymentDto,
-                                                    @RequestHeader("Authorization") String authHeader) {
+                                                     @RequestHeader("X-Username") String username) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
-                .data(orderPaymentBusinessService.processPayment(orderPaymentDto, authHeader.substring(7)))
+                .data(orderPaymentBusinessService.processPayment(orderPaymentDto, username))
                 .build();
         return new ResponseEntity<>(restAPIResponse, HttpStatus.CREATED);
     }

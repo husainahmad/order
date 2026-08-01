@@ -1,8 +1,14 @@
-server.port=8088
+server.port=8083
+server.address=127.0.0.1
+
+#Swagger
+springdoc.api-docs.path=/v3/api-docs
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.swagger-ui.try-it-out.enabled=true
 #Menu configuration properties
 
 harmoni.user.db=pos-user
-harmoni.user.password=forlearn27
+harmoni.user.password=forlearn27!
 
 #Transaction configuration properties
 spring.datasource.transaction.mysql.driver-class-name=com.mysql.cj.jdbc.Driver
@@ -48,7 +54,7 @@ auth.url.update=${auth.url}/api/v1/user
 menu.url=http://localhost:8080
 menu.url.product=${menu.url}/api/v1/product
 menu.url.sku=${menu.url}/api/v1/sku
-menu.url.sku.price=${menu.url}/api/v1/sku/price
+menu.url.sku-price=${menu.url}/api/v1/sku/price
 menu.url.store=${menu.url}/api/v1/store
 menu.url.user=${menu.url}/api/v1/user
 

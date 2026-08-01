@@ -1,7 +1,6 @@
 package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.business.service.menu.UserService;
-import com.harmoni.pos.order.component.JwtUtil;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.OrderStatus;
 import com.harmoni.pos.order.model.dto.OrderDto;
@@ -31,7 +30,6 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
     private final OrderService orderService;
     private final OrderDetailService orderDetailService;
     private final UserService userService;
-    private final JwtUtil jwtUtil;
 
     /**
      * Calculates the subtotal of the order based on the sum of its order detail amounts.
@@ -103,18 +101,18 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
     /**
      * Converts {@link OrderDto} into {@link Order} and performs all business calculations.
      *
-     * @param orderDto   the DTO containing order details
-     * @param token      JWT token used to get user/store context
+     * @param orderDto the DTO containing order details
+     * @param username the username used to get user/store context
      * @return the calculated {@link Order}
      */
     @Override
-    public Order calculate(OrderDto orderDto, String token) {
+    public Order calculate(OrderDto orderDto, String username) {
         Order order = orderDto.toOrder();
-        UserDto userDto = userService.getUserDetail(jwtUtil.extractUsername(token), token);
+        UserDto userDto = userService.getUserDetail(username);
         order.setStore(userDto.getStore());
         order.setOrderNo(orderService.generateOrderNo(order));
         order.setCustomerId(-1);
-        order.setOrderDetails(orderDetailService.populateOrderDetail(orderDto.getOrderDetailDtos(), token));
+        order.setOrderDetails(orderDetailService.populateOrderDetail(orderDto.getOrderDetailDtos()));
 
         calculateSubtotal(order);
         calculateDiscount(order, orderDto);
@@ -129,12 +127,12 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
      * Confirms and persists a new order after performing calculations.
      *
      * @param orderDto the order input DTO
-     * @param token    JWT token
+     * @param username the username used to get user/store context
      * @return the confirmed and persisted order
      */
     @Override
-    public Order confirm(OrderDto orderDto, String token) {
-        Order order = calculate(orderDto, token);
+    public Order confirm(OrderDto orderDto, String username) {
+        Order order = calculate(orderDto, username);
         order.setStatus(OrderStatus.CONFIRMED);
         orderService.insert(order);
         return order;
@@ -145,23 +143,23 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
      * Does not persist the order.
      *
      * @param orderDto the order input DTO
-     * @param token    JWT token
+     * @param username the username used to get user/store context
      * @return the calculated order
      */
     @Override
-    public Order print(OrderDto orderDto, String token) {
-        return calculate(orderDto, token);
+    public Order print(OrderDto orderDto, String username) {
+        return calculate(orderDto, username);
     }
 
     /**
      * Voids an order by setting its status to {@link OrderStatus#VOID}.
      *
-     * @param orderId the ID of the order to void
-     * @param token   JWT token
+     * @param orderId  the ID of the order to void
+     * @param username the username used to get user/store context
      * @return the updated order
      */
     @Override
-    public Order voidOrder(Integer orderId, String token) {
+    public Order voidOrder(Integer orderId, String username) {
         Order order = orderService.selectByPrimaryKey(orderId);
         order.setStatus(OrderStatus.VOID);
         order.setUpdatedAt(new Date(System.currentTimeMillis()));
@@ -172,12 +170,12 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
     /**
      * Retrieves the list of orders for the current day based on the authenticated store.
      *
-     * @param token JWT token
+     * @param username the username used to determine the store and time zone
      * @return list of today's orders for the store
      */
     @Override
-    public List<Order> getDailyListByStore(String token) {
-        UserDto userDto = userService.getUserDetail(jwtUtil.extractUsername(token), token);
+    public List<Order> getDailyListByStore(String username) {
+        UserDto userDto = userService.getUserDetail(username);
         ZoneId zoneId = ZoneId.of(userDto.getStore().getTimeZone());
 
         Timestamp[] dailyRange = getDailyTimeRange(zoneId);

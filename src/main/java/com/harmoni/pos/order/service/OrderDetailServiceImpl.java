@@ -91,14 +91,13 @@ public class OrderDetailServiceImpl implements OrderDetailService {
      * enriching with product names, categories, and SKU prices.
      *
      * @param orderDetailDtos list of order detail DTOs
-     * @param token JWT or access token for fetching remote data
      * @return a list of populated {@link OrderDetail} entities
      */
     @Override
-    public List<OrderDetail> populateOrderDetail(List<OrderDetailDto> orderDetailDtos, String token) {
+    public List<OrderDetail> populateOrderDetail(List<OrderDetailDto> orderDetailDtos) {
         List<OrderDetail> orderDetails = new ArrayList<>();
 
-        List<ProductDto> productDtos = this.getProductWithName(orderDetailDtos, token);
+        List<ProductDto> productDtos = this.getProductWithName(orderDetailDtos);
         Map<Integer, String> productNameMap = productDtos.stream()
                 .collect(Collectors.toMap(
                         ProductDto::getId,
@@ -111,7 +110,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
                         productDto -> Optional.ofNullable(productDto.getCategory()).orElseThrow()
                 ));
 
-        List<SkuDto> skuDtos = this.getDetailSkuWithPrice(orderDetailDtos, token);
+        List<SkuDto> skuDtos = this.getDetailSkuWithPrice(orderDetailDtos);
         Map<Integer, BigDecimal> skuPriceMap = skuDtos.stream()
                 .collect(Collectors.toMap(
                         SkuDto::getId,
@@ -153,34 +152,32 @@ public class OrderDetailServiceImpl implements OrderDetailService {
      * Retrieves SKU details (including pricing) from the menu service based on the order detail input.
      *
      * @param orderDetailDtos list of order detail DTOs
-     * @param token JWT or access token
      * @return list of SKU DTOs with price information
      */
     @Override
-    public List<SkuDto> getDetailSkuWithPrice(List<OrderDetailDto> orderDetailDtos, String token) {
+    public List<SkuDto> getDetailSkuWithPrice(List<OrderDetailDto> orderDetailDtos) {
         List<Integer> skuIds = new ArrayList<>();
         for (OrderDetailDto orderDetailDto : orderDetailDtos) {
             for (OrderDetailSkuDto orderDetailSkuDto : orderDetailDto.getOrderDetailSkus()) {
                 skuIds.add(orderDetailSkuDto.getSkuId());
             }
         }
-        return menuService.getSkusWithPrice(skuIds, token);
+        return menuService.getSkusWithPrice(skuIds);
     }
 
     /**
      * Retrieves product details (including name and category) from the menu service.
      *
      * @param orderDetailDtos list of order detail DTOs
-     * @param token JWT or access token
      * @return list of product DTOs with names
      */
     @Override
-    public List<ProductDto> getProductWithName(List<OrderDetailDto> orderDetailDtos, String token) {
+    public List<ProductDto> getProductWithName(List<OrderDetailDto> orderDetailDtos) {
         List<Integer> productIds = new ArrayList<>();
         for (OrderDetailDto orderDetailDto : orderDetailDtos) {
             productIds.add(orderDetailDto.getProductId());
         }
-        return menuService.getProductWithName(productIds, token);
+        return menuService.getProductWithName(productIds);
     }
 
     /**

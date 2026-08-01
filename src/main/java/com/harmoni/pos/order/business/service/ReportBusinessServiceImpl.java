@@ -1,7 +1,6 @@
 package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.business.service.menu.UserService;
-import com.harmoni.pos.order.component.JwtUtil;
 import com.harmoni.pos.order.mapper.ReportMapper;
 import com.harmoni.pos.order.model.PaymentSummary;
 import com.harmoni.pos.order.model.SettlementReport;
@@ -25,7 +24,6 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
 
     private final ReportMapper reportMapper;
     private final UserService userService;
-    private final JwtUtil jwtUtil;
 
     /**
      * Generates a settlement report for the given store and time range.

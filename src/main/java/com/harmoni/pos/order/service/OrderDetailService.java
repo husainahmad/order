@@ -12,8 +12,8 @@ public interface OrderDetailService {
     int insert(OrderDetail orderDetail);
     void insertBulk(List<OrderDetail> orderDetails);
     OrderDetail selectByPrimaryKey(Integer id);
-    List<OrderDetail> populateOrderDetail(List<OrderDetailDto> orderDetailDtos, String token);
-    List<SkuDto> getDetailSkuWithPrice(List<OrderDetailDto> orderDetailDtos, String token);
-    List<ProductDto> getProductWithName(List<OrderDetailDto> orderDetailDtos, String token);
+    List<OrderDetail> populateOrderDetail(List<OrderDetailDto> orderDetailDtos);
+    List<SkuDto> getDetailSkuWithPrice(List<OrderDetailDto> orderDetailDtos);
+    List<ProductDto> getProductWithName(List<OrderDetailDto> orderDetailDtos);
     int updateByPrimaryKey(OrderDetail orderDetail);
 }

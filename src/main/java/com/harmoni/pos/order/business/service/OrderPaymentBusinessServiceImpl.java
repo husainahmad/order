@@ -1,7 +1,6 @@
 package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.business.service.menu.UserService;
-import com.harmoni.pos.order.component.JwtUtil;
 import com.harmoni.pos.order.exception.BusinessUnAuthorizedRequestException;
 import com.harmoni.pos.order.model.OrderPayment;
 import com.harmoni.pos.order.model.Order;
@@ -26,26 +25,25 @@ public class OrderPaymentBusinessServiceImpl implements OrderPaymentBusinessServ
     private final OrderService orderService;
     private final OrderPaymentService orderPaymentService;
     private final UserService userService;
-    private final JwtUtil jwtUtil;
 
     /**
      * Processes a payment for a given order:
      * <ul>
-     *   <li>Validates the store ownership using the JWT token</li>
+     *   <li>Validates the store ownership</li>
      *   <li>Updates the order status to {@link OrderStatus#PAID}</li>
      *   <li>Creates and persists an {@link OrderPayment}</li>
      * </ul>
      *
      * @param paymentDto the DTO containing payment information
-     * @param token the JWT token used for authentication and authorization
+     * @param username   the username used to get user/store context
      * @return the updated {@link Order} object, including its payment
      * @throws BusinessUnAuthorizedRequestException if the user does not belong to the same store
      */
     @Override
-    public Order processPayment(OrderPaymentDto paymentDto, String token) {
+    public Order processPayment(OrderPaymentDto paymentDto, String username) {
         Order order = orderService.selectByPrimaryKey(paymentDto.getOrderId());
 
-        UserDto userDto = userService.getUserDetail(jwtUtil.extractUsername(token), token);
+        UserDto userDto = userService.getUserDetail(username);
         if (!userDto.getStore().getId().equals(order.getStoreId())) {
             throw new BusinessUnAuthorizedRequestException(BusinessUnAuthorizedRequestException.UN_AUTHORIZED, null);
         }
