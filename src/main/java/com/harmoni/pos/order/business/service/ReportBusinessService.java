@@ -1,5 +1,7 @@
 package com.harmoni.pos.order.business.service;
 
+import com.harmoni.pos.order.model.DailyReport;
+import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
 import com.harmoni.pos.order.model.TopProductReport;
 
@@ -31,4 +33,26 @@ public interface ReportBusinessService {
      * @return a list of {@link TopProductReport} ordered by sales volume or revenue
      */
     List<TopProductReport> getTopProducts(Integer storeId, LocalDateTime start, LocalDateTime end, int limit);
+
+    /**
+     * Retrieves a daily report for a store within a given date-time range.
+     * Each day includes the products sold with their quantity, net sales, and discount.
+     *
+     * @param storeId the ID of the store
+     * @param start   the start datetime of the reporting period
+     * @param end     the end datetime of the reporting period
+     * @return a list of {@link DailyReport} grouped by day
+     */
+    List<DailyReport> getDailyReport(Integer storeId, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Retrieves the sales report for a store within a given date-time range,
+     * aggregated by product and category.
+     *
+     * @param storeId the ID of the store
+     * @param start   the start datetime of the reporting period
+     * @param end     the end datetime of the reporting period
+     * @return a list of {@link ProductSalesReport} grouped by product and category
+     */
+    List<ProductSalesReport> getSalesReport(Integer storeId, LocalDateTime start, LocalDateTime end);
 }

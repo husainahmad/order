@@ -112,7 +112,7 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         order.setStore(userDto.getStore());
         order.setOrderNo(orderService.generateOrderNo(order));
         order.setCustomerId(-1);
-        order.setOrderDetails(orderDetailService.populateOrderDetail(orderDto.getOrderDetailDtos()));
+        order.setOrderDetails(orderDetailService.populateOrderDetail(orderDto.getOrderDetailDtos(), username));
 
         calculateSubtotal(order);
         calculateDiscount(order, orderDto);

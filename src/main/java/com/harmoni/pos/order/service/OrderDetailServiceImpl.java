@@ -91,13 +91,14 @@ public class OrderDetailServiceImpl implements OrderDetailService {
      * enriching with product names, categories, and SKU prices.
      *
      * @param orderDetailDtos list of order detail DTOs
+     * @param username        username forwarded to the menu service
      * @return a list of populated {@link OrderDetail} entities
      */
     @Override
-    public List<OrderDetail> populateOrderDetail(List<OrderDetailDto> orderDetailDtos) {
+    public List<OrderDetail> populateOrderDetail(List<OrderDetailDto> orderDetailDtos, String username) {
         List<OrderDetail> orderDetails = new ArrayList<>();
 
-        List<ProductDto> productDtos = this.getProductWithName(orderDetailDtos);
+        List<ProductDto> productDtos = this.getProductWithName(orderDetailDtos, username);
         Map<Integer, String> productNameMap = productDtos.stream()
                 .collect(Collectors.toMap(
                         ProductDto::getId,
@@ -110,7 +111,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
                         productDto -> Optional.ofNullable(productDto.getCategory()).orElseThrow()
                 ));
 
-        List<SkuDto> skuDtos = this.getDetailSkuWithPrice(orderDetailDtos);
+        List<SkuDto> skuDtos = this.getDetailSkuWithPrice(orderDetailDtos, username);
         Map<Integer, BigDecimal> skuPriceMap = skuDtos.stream()
                 .collect(Collectors.toMap(
                         SkuDto::getId,
@@ -152,32 +153,34 @@ public class OrderDetailServiceImpl implements OrderDetailService {
      * Retrieves SKU details (including pricing) from the menu service based on the order detail input.
      *
      * @param orderDetailDtos list of order detail DTOs
+     * @param username        username forwarded to the menu service
      * @return list of SKU DTOs with price information
      */
     @Override
-    public List<SkuDto> getDetailSkuWithPrice(List<OrderDetailDto> orderDetailDtos) {
+    public List<SkuDto> getDetailSkuWithPrice(List<OrderDetailDto> orderDetailDtos, String username) {
         List<Integer> skuIds = new ArrayList<>();
         for (OrderDetailDto orderDetailDto : orderDetailDtos) {
             for (OrderDetailSkuDto orderDetailSkuDto : orderDetailDto.getOrderDetailSkus()) {
                 skuIds.add(orderDetailSkuDto.getSkuId());
             }
         }
-        return menuService.getSkusWithPrice(skuIds);
+        return menuService.getSkusWithPrice(skuIds, username);
     }
 
     /**
      * Retrieves product details (including name and category) from the menu service.
      *
      * @param orderDetailDtos list of order detail DTOs
+     * @param username        username forwarded to the menu service
      * @return list of product DTOs with names
      */
     @Override
-    public List<ProductDto> getProductWithName(List<OrderDetailDto> orderDetailDtos) {
+    public List<ProductDto> getProductWithName(List<OrderDetailDto> orderDetailDtos, String username) {
         List<Integer> productIds = new ArrayList<>();
         for (OrderDetailDto orderDetailDto : orderDetailDtos) {
             productIds.add(orderDetailDto.getProductId());
         }
-        return menuService.getProductWithName(productIds);
+        return menuService.getProductWithName(productIds, username);
     }
 
     /**

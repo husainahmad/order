@@ -3,6 +3,9 @@ package com.harmoni.pos.order.http.controller;
 import com.harmoni.pos.order.business.service.ReportBusinessService;
 import com.harmoni.pos.order.business.service.menu.UserService;
 import com.harmoni.pos.order.component.JwtUtil;
+import com.harmoni.pos.order.model.DailyReport;
+import com.harmoni.pos.order.model.DailyProductReport;
+import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
 import com.harmoni.pos.order.model.TopProductReport;
 import com.harmoni.pos.order.model.dto.StoreDto;
@@ -15,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -84,5 +88,74 @@ class ReportControllerTest {
                 .andExpect(jsonPath("$.data.length()").value(2))
                 .andExpect(jsonPath("$.data[0].productId").value(1))
                 .andExpect(jsonPath("$.data[1].productId").value(2));
+    }
+
+    @Test
+    void getDailyReport_shouldReturn200() throws Exception {
+        var storeDto = new StoreDto().setId(1);
+        var userDto = new UserDto().setStore(storeDto).setStoreId(1);
+
+        when(userService.getUserDetail("test-user")).thenReturn(userDto);
+
+        var dailyReport = new DailyReport();
+        dailyReport.setDate(LocalDate.of(2025, 1, 1));
+        dailyReport.setProducts(List.of(
+                new DailyProductReport()
+                        .setProductId(1)
+                        .setProductName("Coffee")
+                        .setQuantity(10)
+                        .setNetSales(BigDecimal.valueOf(150))
+                        .setDiscount(BigDecimal.valueOf(10))
+        ));
+        when(reportBusinessService.getDailyReport(anyInt(), any(), any()))
+                .thenReturn(List.of(dailyReport));
+
+        mockMvc.perform(get("/api/v1/reports/daily")
+                        .param("start", "2025-01-01T00:00:00")
+                        .param("end", "2025-01-02T00:00:00")
+                        .header("X-Username", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].date").value("2025-01-01"))
+                .andExpect(jsonPath("$.data[0].products[0].productName").value("Coffee"))
+                .andExpect(jsonPath("$.data[0].products[0].quantity").value(10))
+                .andExpect(jsonPath("$.data[0].products[0].netSales").value(150))
+                .andExpect(jsonPath("$.data[0].products[0].discount").value(10));
+    }
+
+    @Test
+    void getSalesReport_shouldReturn200() throws Exception {
+        var storeDto = new StoreDto().setId(1);
+        var userDto = new UserDto().setStore(storeDto).setStoreId(1);
+
+        when(userService.getUserDetail("test-user")).thenReturn(userDto);
+
+        var salesReport = List.of(
+                new ProductSalesReport()
+                        .setCategoryId(1)
+                        .setCategoryName("Beverages")
+                        .setProductId(1)
+                        .setProductName("Coffee")
+                        .setQuantity(10)
+                        .setGrossSales(BigDecimal.valueOf(150))
+                        .setDiscount(BigDecimal.valueOf(10))
+                        .setNetSales(BigDecimal.valueOf(140))
+        );
+        when(reportBusinessService.getSalesReport(anyInt(), any(), any()))
+                .thenReturn(salesReport);
+
+        mockMvc.perform(get("/api/v1/reports/sales")
+                        .param("start", "2025-01-01T00:00:00")
+                        .param("end", "2025-01-02T00:00:00")
+                        .header("X-Username", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.length()").value(1))
+                .andExpect(jsonPath("$.data[0].categoryId").value(1))
+                .andExpect(jsonPath("$.data[0].categoryName").value("Beverages"))
+                .andExpect(jsonPath("$.data[0].productId").value(1))
+                .andExpect(jsonPath("$.data[0].productName").value("Coffee"))
+                .andExpect(jsonPath("$.data[0].quantity").value(10))
+                .andExpect(jsonPath("$.data[0].grossSales").value(150))
+                .andExpect(jsonPath("$.data[0].netSales").value(140));
     }
 }

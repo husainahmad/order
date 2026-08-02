@@ -36,16 +36,17 @@ public class StoreService implements Serializable {
     /**
      * Fetches detailed information about a specific store by its ID.
      *
-     * @param storeId the unique identifier of the store
+     * @param storeId  the unique identifier of the store
+     * @param username username forwarded to the menu service
      * @return a {@link StoreDto} containing store details
      * @throws java.util.NoSuchElementException if the response is null or invalid
      */
-    public StoreDto getStoreDetail(Integer storeId) {
+    public StoreDto getStoreDetail(Integer storeId, String username) {
         String finalUrl = UriComponentsBuilder
                 .fromHttpUrl(menuProperties.getStore().concat("/").concat(String.valueOf(storeId)))
                 .toUriString();
 
-        RestAPIResponse restAPIResponse = restClientService.get(finalUrl).block();
+        RestAPIResponse restAPIResponse = restClientService.get(username, finalUrl).block();
 
         return Optional.ofNullable(restAPIResponse)
                 .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<StoreDto>() {}))

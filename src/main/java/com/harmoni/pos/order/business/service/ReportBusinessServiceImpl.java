@@ -2,7 +2,9 @@ package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.business.service.menu.UserService;
 import com.harmoni.pos.order.mapper.ReportMapper;
+import com.harmoni.pos.order.model.DailyReport;
 import com.harmoni.pos.order.model.PaymentSummary;
+import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
 import com.harmoni.pos.order.model.TopProductReport;
 import lombok.RequiredArgsConstructor;
@@ -67,5 +69,33 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
     @Override
     public List<TopProductReport> getTopProducts(Integer storeId, LocalDateTime start, LocalDateTime end, int limit) {
         return reportMapper.getTopProducts(storeId, start, end, limit);
+    }
+
+    /**
+     * Retrieves the daily report grouped by day and product for the given store
+     * and time range.
+     *
+     * @param storeId the ID of the store
+     * @param start   the start datetime of the report range
+     * @param end     the end datetime of the report range
+     * @return a list of {@link DailyReport} grouped by day
+     */
+    @Override
+    public List<DailyReport> getDailyReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
+        return reportMapper.getDailyReport(storeId, start, end);
+    }
+
+    /**
+     * Retrieves the sales report aggregated by product and category for the given
+     * store and time range.
+     *
+     * @param storeId the ID of the store
+     * @param start   the start datetime of the report range
+     * @param end     the end datetime of the report range
+     * @return a list of {@link ProductSalesReport} grouped by product and category
+     */
+    @Override
+    public List<ProductSalesReport> getSalesReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
+        return reportMapper.getSalesReport(storeId, start, end);
     }
 }

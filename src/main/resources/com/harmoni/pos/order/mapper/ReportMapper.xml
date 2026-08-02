@@ -51,4 +51,61 @@
             LIMIT #{limit}
     </select>
 
+    <resultMap id="DailyReportMap" type="com.harmoni.pos.order.model.DailyReport">
+        <id property="date" column="report_date"/>
+        <collection property="products" ofType="com.harmoni.pos.order.model.DailyProductReport">
+            <result property="productId" column="product_id"/>
+            <result property="productName" column="product_name"/>
+            <result property="quantity" column="quantity"/>
+            <result property="netSales" column="net_sales"/>
+            <result property="discount" column="discount"/>
+        </collection>
+    </resultMap>
+
+    <select id="getDailyReport" resultMap="DailyReportMap">
+        SELECT
+            DATE(o.created_at) AS report_date,
+            od.product_id,
+            od.product_name,
+            COALESCE(SUM(sku_qty.quantity_sold), 0) AS quantity,
+            SUM(od.amount) AS net_sales,
+            SUM(od.amount / NULLIF(o.sub_total, 0) * o.discount_total) AS discount
+        FROM order_details od
+            JOIN orders o ON od.order_id = o.id
+            LEFT JOIN (
+                SELECT order_detail_id, SUM(quantity) AS quantity_sold
+                FROM order_detail_skus
+                GROUP BY order_detail_id
+            ) sku_qty ON sku_qty.order_detail_id = od.id
+        WHERE o.store_id = #{storeId}
+            AND o.status = 'PAID'
+            AND o.created_at BETWEEN #{start} AND #{end}
+        GROUP BY DATE(o.created_at), od.product_id, od.product_name
+        ORDER BY report_date, quantity DESC
+    </select>
+
+    <select id="getSalesReport" resultType="com.harmoni.pos.order.model.ProductSalesReport">
+        SELECT
+            od.category_id AS categoryId,
+            od.category_name AS categoryName,
+            od.product_id AS productId,
+            od.product_name AS productName,
+            COALESCE(SUM(sku_qty.quantity_sold), 0) AS quantity,
+            SUM(od.amount) AS grossSales,
+            SUM(od.amount / NULLIF(o.sub_total, 0) * o.discount_total) AS discount,
+            SUM(od.amount) - SUM(od.amount / NULLIF(o.sub_total, 0) * o.discount_total) AS netSales
+        FROM order_details od
+            JOIN orders o ON od.order_id = o.id
+            LEFT JOIN (
+                SELECT order_detail_id, SUM(quantity) AS quantity_sold
+                FROM order_detail_skus
+                GROUP BY order_detail_id
+            ) sku_qty ON sku_qty.order_detail_id = od.id
+        WHERE o.store_id = #{storeId}
+            AND o.status = 'PAID'
+            AND o.created_at BETWEEN #{start} AND #{end}
+        GROUP BY od.category_id, od.category_name, od.product_id, od.product_name
+        ORDER BY od.category_name, quantity DESC
+    </select>
+
 </mapper>

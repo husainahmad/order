@@ -1,6 +1,8 @@
 package com.harmoni.pos.order.mapper;
 
+import com.harmoni.pos.order.model.DailyReport;
 import com.harmoni.pos.order.model.PaymentSummary;
+import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
 import com.harmoni.pos.order.model.TopProductReport;
 import org.apache.ibatis.annotations.Mapper;
@@ -22,5 +24,13 @@ public interface ReportMapper {
                                           @Param("start") LocalDateTime start,
                                           @Param("end") LocalDateTime end,
                                           @Param("limit") int limit);
+
+    List<DailyReport> getDailyReport(@Param("storeId") Integer storeId,
+                                     @Param("start") LocalDateTime start,
+                                     @Param("end") LocalDateTime end);
+
+    List<ProductSalesReport> getSalesReport(@Param("storeId") Integer storeId,
+                                            @Param("start") LocalDateTime start,
+                                            @Param("end") LocalDateTime end);
 
 }

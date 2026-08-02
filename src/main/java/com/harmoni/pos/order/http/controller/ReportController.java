@@ -71,6 +71,53 @@ public class ReportController {
     }
 
     /**
+     * Retrieves the daily report for the authenticated user's store
+     * within a specific date-time range. Each day contains the products sold
+     * with their quantity, net sales, and discount.
+     *
+     * <p><b>Endpoint:</b> GET /api/v1/reports/daily</p>
+     *
+     * @param start    the start date and time (ISO format), e.g., 2025-06-01T00:00:00
+     * @param end      the end date and time (ISO format), e.g., 2025-06-14T23:59:59
+     * @param username the username extracted from the X-Username header
+     * @return a ResponseEntity containing the list of daily reports in RestAPIResponse
+     */
+    @GetMapping("/daily")
+    public ResponseEntity<RestAPIResponse> getDailyReport(
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestHeader("X-Username") String username
+    ) {
+        RestAPIResponse restAPIResponse = RestAPIResponse.builder()
+                .data(reportBusinessService.getDailyReport(getUserDto(username).getStoreId(), start, end))
+                .build();
+        return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
+    }
+
+    /**
+     * Retrieves the sales report for the authenticated user's store within a
+     * specific date-time range, aggregated by product and category.
+     *
+     * <p><b>Endpoint:</b> GET /api/v1/reports/sales</p>
+     *
+     * @param start    the start date and time (ISO format), e.g., 2025-06-01T00:00:00
+     * @param end      the end date and time (ISO format), e.g., 2025-06-14T23:59:59
+     * @param username the username extracted from the X-Username header
+     * @return a ResponseEntity containing the list of product sales grouped by category
+     */
+    @GetMapping("/sales")
+    public ResponseEntity<RestAPIResponse> getSalesReport(
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestHeader("X-Username") String username
+    ) {
+        RestAPIResponse restAPIResponse = RestAPIResponse.builder()
+                .data(reportBusinessService.getSalesReport(getUserDto(username).getStoreId(), start, end))
+                .build();
+        return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
+    }
+
+    /**
      * Retrieves the user information (UserDto) for the given username.
      *
      * @param username the username to look up

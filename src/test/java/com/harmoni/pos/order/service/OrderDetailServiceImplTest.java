@@ -107,10 +107,10 @@ class OrderDetailServiceImplTest {
         orderDetailDto.setProductId(1);
         orderDetailDto.setOrderDetailSkus(List.of(orderDetailSkuDto));
 
-        when(menuService.getProductWithName(List.of(1))).thenReturn(List.of(productDto));
-        when(menuService.getSkusWithPrice(List.of(100))).thenReturn(List.of(skuDto));
+        when(menuService.getProductWithName(List.of(1), "test-user")).thenReturn(List.of(productDto));
+        when(menuService.getSkusWithPrice(List.of(100), "test-user")).thenReturn(List.of(skuDto));
 
-        List<OrderDetail> result = orderDetailService.populateOrderDetail(List.of(orderDetailDto));
+        List<OrderDetail> result = orderDetailService.populateOrderDetail(List.of(orderDetailDto), "test-user");
 
         assertEquals(1, result.size());
         OrderDetail detail = result.get(0);
@@ -135,9 +135,9 @@ class OrderDetailServiceImplTest {
         orderDetailDto.setProductId(10);
         orderDetailDto.setOrderDetailSkus(List.of(orderDetailSkuDto));
 
-        orderDetailService.getDetailSkuWithPrice(List.of(orderDetailDto));
+        orderDetailService.getDetailSkuWithPrice(List.of(orderDetailDto), "test-user");
 
-        verify(menuService).getSkusWithPrice(List.of(1));
+        verify(menuService).getSkusWithPrice(List.of(1), "test-user");
     }
 
     @Test
@@ -145,8 +145,8 @@ class OrderDetailServiceImplTest {
         var orderDetailDto = new OrderDetailDto();
         orderDetailDto.setProductId(10);
 
-        orderDetailService.getProductWithName(List.of(orderDetailDto));
+        orderDetailService.getProductWithName(List.of(orderDetailDto), "test-user");
 
-        verify(menuService).getProductWithName(List.of(10));
+        verify(menuService).getProductWithName(List.of(10), "test-user");
     }
 }

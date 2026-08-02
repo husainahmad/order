@@ -31,22 +31,25 @@ public class RestClientService implements Serializable {
     private static final String LOG_UN_AUTHORIZED = "LOG_UN_AUTHORIZED Server Response {}";
     private static final String LOG_INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR Server Response {}";
     private static final String BEARER = "Bearer ";
+    private static final String X_USERNAME = "X-Username";
     private static final WebClient webClient = WebClient.builder().build();
 
     /**
      * Sends a POST request to the given URL with the specified body and authorization token.
      *
      * @param token     JWT token for authorization
+     * @param username  username forwarded to the target service
      * @param url       Target URL
      * @param publisher Reactive body content
      * @param className Type of the request body
      * @return Mono emitting {@link RestAPIResponse}
      */
-    public Mono<RestAPIResponse> post(String token, String url, Publisher<?> publisher, Class<?> className) {
+    public Mono<RestAPIResponse> post(String token, String username, String url, Publisher<?> publisher, Class<?> className) {
         return webClient.post()
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.AUTHORIZATION, BEARER.concat(token))
+                .header(X_USERNAME, username)
                 .body(publisher, className)
                 .retrieve()
                 .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
@@ -59,13 +62,15 @@ public class RestClientService implements Serializable {
     /**
      * Sends a GET request to the given URL.
      *
-     * @param url Target URL
+     * @param username username forwarded to the target service
+     * @param url      Target URL
      * @return Mono emitting {@link RestAPIResponse}
      */
-    public Mono<RestAPIResponse> get(String url) {
+    public Mono<RestAPIResponse> get(String username, String url) {
         WebClient.ResponseSpec retrieve = webClient.get()
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .header(X_USERNAME, username)
                 .retrieve();
 
         retrieve.onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent);
@@ -80,16 +85,18 @@ public class RestClientService implements Serializable {
      * Sends a PUT request to the given URL with the specified body and authorization token.
      *
      * @param token     JWT token for authorization
+     * @param username  username forwarded to the target service
      * @param url       Target URL
      * @param publisher Reactive body content
      * @param className Type of the request body
      * @return Mono emitting {@link RestAPIResponse}
      */
-    public Mono<RestAPIResponse> put(String token, String url, Publisher<?> publisher, Class<?> className) {
+    public Mono<RestAPIResponse> put(String token, String username, String url, Publisher<?> publisher, Class<?> className) {
         return webClient.put()
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.AUTHORIZATION, BEARER.concat(token))
+                .header(X_USERNAME, username)
                 .body(publisher, className)
                 .retrieve()
                 .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
@@ -102,15 +109,17 @@ public class RestClientService implements Serializable {
     /**
      * Sends a DELETE request to the given URL with the authorization token.
      *
-     * @param token JWT token for authorization
-     * @param url   Target URL
+     * @param token    JWT token for authorization
+     * @param username username forwarded to the target service
+     * @param url      Target URL
      * @return Mono emitting {@link RestAPIResponse}
      */
-    public Mono<RestAPIResponse> delete(String token, String url) {
+    public Mono<RestAPIResponse> delete(String token, String username, String url) {
         return webClient.delete()
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(HttpHeaders.AUTHORIZATION, BEARER.concat(token))
+                .header(X_USERNAME, username)
                 .retrieve()
                 .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
                 .onStatus(HttpStatus.BAD_REQUEST::equals, this::handleBadRequest)

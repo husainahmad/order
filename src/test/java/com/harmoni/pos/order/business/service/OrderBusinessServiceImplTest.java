@@ -151,7 +151,7 @@ class OrderBusinessServiceImplTest {
 
         when(userService.getUserDetail(username)).thenReturn(userDto);
         when(orderService.generateOrderNo(any())).thenReturn("ORD5-20250101000000-ABC123");
-        when(orderDetailService.populateOrderDetail(any())).thenReturn(orderDetails);
+        when(orderDetailService.populateOrderDetail(any(), anyString())).thenReturn(orderDetails);
 
         Order result = orderBusinessService.calculate(orderDto, username);
 
@@ -178,7 +178,7 @@ class OrderBusinessServiceImplTest {
 
         when(userService.getUserDetail(username)).thenReturn(userDto);
         when(orderService.generateOrderNo(any())).thenReturn("ORD5-20250101000000-ABC123");
-        when(orderDetailService.populateOrderDetail(any()))
+        when(orderDetailService.populateOrderDetail(any(), anyString()))
                 .thenReturn(List.of(new OrderDetail().setAmount(BigDecimal.valueOf(50))));
         when(orderService.insert(any())).thenReturn(1);
 
@@ -199,7 +199,7 @@ class OrderBusinessServiceImplTest {
 
         when(userService.getUserDetail(username)).thenReturn(userDto);
         when(orderService.generateOrderNo(any())).thenReturn("ORD5-20250101000000-ABC123");
-        when(orderDetailService.populateOrderDetail(any()))
+        when(orderDetailService.populateOrderDetail(any(), anyString()))
                 .thenReturn(List.of(new OrderDetail().setAmount(BigDecimal.valueOf(50))));
 
         Order result = orderBusinessService.print(orderDto, username);

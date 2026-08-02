@@ -39,10 +39,11 @@ public class MenuService implements Serializable {
     /**
      * Retrieves a list of {@link SkuDto} including price information for the given list of SKU IDs.
      *
-     * @param ids a list of SKU ID integers
+     * @param ids      a list of SKU ID integers
+     * @param username username forwarded to the menu service
      * @return a list of {@link SkuDto} with price data, or an empty list if no data is returned
      */
-    public List<SkuDto> getSkusWithPrice(List<Integer> ids) {
+    public List<SkuDto> getSkusWithPrice(List<Integer> ids, String username) {
         String encodedIds = ids.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
@@ -51,7 +52,7 @@ public class MenuService implements Serializable {
                 .queryParam("ids", encodedIds)
                 .toUriString();
 
-        RestAPIResponse restAPIResponse = restClientService.get(finalUrl).block();
+        RestAPIResponse restAPIResponse = restClientService.get(username, finalUrl).block();
 
         return Optional.ofNullable(restAPIResponse)
                 .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<List<SkuDto>>() {}))
@@ -61,10 +62,11 @@ public class MenuService implements Serializable {
     /**
      * Retrieves a list of {@link ProductDto} with name and metadata for the given product IDs.
      *
-     * @param ids a list of product ID integers
+     * @param ids      a list of product ID integers
+     * @param username username forwarded to the menu service
      * @return a list of {@link ProductDto} with names and attributes, or an empty list if no data is returned
      */
-    public List<ProductDto> getProductWithName(List<Integer> ids) {
+    public List<ProductDto> getProductWithName(List<Integer> ids, String username) {
         String encodedIds = ids.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining(","));
@@ -73,7 +75,7 @@ public class MenuService implements Serializable {
                 .queryParam("ids", encodedIds)
                 .toUriString();
 
-        RestAPIResponse restAPIResponse = restClientService.get(finalUrl).block();
+        RestAPIResponse restAPIResponse = restClientService.get(username, finalUrl).block();
 
         return Optional.ofNullable(restAPIResponse)
                 .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<List<ProductDto>>() {}))

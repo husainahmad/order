@@ -44,7 +44,7 @@ public class UserService implements Serializable {
         String finalUrl = UriComponentsBuilder.fromHttpUrl(menuProperties.getUser().concat("/").concat(username))
                 .toUriString();
 
-        RestAPIResponse restAPIResponse = restClientService.get(finalUrl).block();
+        RestAPIResponse restAPIResponse = restClientService.get(username, finalUrl).block();
 
         return Optional.ofNullable(restAPIResponse)
                 .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<UserDto>() {}))
