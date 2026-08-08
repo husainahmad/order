@@ -5,6 +5,7 @@ import com.harmoni.pos.order.business.service.menu.UserService;
 import com.harmoni.pos.order.component.JwtUtil;
 import com.harmoni.pos.order.model.DailyReport;
 import com.harmoni.pos.order.model.DailyProductReport;
+import com.harmoni.pos.order.model.OrderVolumeReport;
 import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
 import com.harmoni.pos.order.model.TopProductReport;
@@ -157,5 +158,29 @@ class ReportControllerTest {
                 .andExpect(jsonPath("$.data[0].quantity").value(10))
                 .andExpect(jsonPath("$.data[0].grossSales").value(150))
                 .andExpect(jsonPath("$.data[0].netSales").value(140));
+    }
+
+    @Test
+    void getOrderVolumeReport_shouldReturn200() throws Exception {
+        var storeDto = new StoreDto().setId(1);
+        var userDto = new UserDto().setStore(storeDto).setStoreId(1);
+
+        when(userService.getUserDetail("test-user")).thenReturn(userDto);
+
+        var orderVolumeReport = new OrderVolumeReport()
+                .setTotalOrders(100)
+                .setPeakTimeOrders(45)
+                .setNonPeakTimeOrders(55);
+        when(reportBusinessService.getOrderVolumeReport(anyInt(), any(), any()))
+                .thenReturn(orderVolumeReport);
+
+        mockMvc.perform(get("/api/v1/reports/order-volume")
+                        .param("start", "2025-01-01T00:00:00")
+                        .param("end", "2025-01-02T00:00:00")
+                        .header("X-Username", "test-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalOrders").value(100))
+                .andExpect(jsonPath("$.data.peakTimeOrders").value(45))
+                .andExpect(jsonPath("$.data.nonPeakTimeOrders").value(55));
     }
 }

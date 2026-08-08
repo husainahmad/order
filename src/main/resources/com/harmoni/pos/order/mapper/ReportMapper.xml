@@ -108,4 +108,30 @@
         ORDER BY od.category_name, quantity DESC
     </select>
 
+    <select id="getOrderVolumeReport" resultType="com.harmoni.pos.order.model.OrderVolumeReport">
+        WITH hourly AS (
+            SELECT
+                DATE(created_at) AS report_date,
+                HOUR(created_at) AS hour_of_day,
+                COUNT(*) AS order_count
+            FROM orders
+            WHERE store_id = #{storeId}
+                AND created_at BETWEEN #{start} AND #{end}
+            GROUP BY DATE(created_at), HOUR(created_at)
+        )
+        SELECT
+            (SELECT COUNT(*) FROM orders
+             WHERE store_id = #{storeId}
+               AND created_at BETWEEN #{start} AND #{end}) AS totalOrders,
+            COALESCE((
+                SELECT SUM(order_count)
+                FROM hourly
+                WHERE order_count = (
+                    SELECT MAX(order_count)
+                    FROM hourly h
+                    WHERE h.report_date = hourly.report_date
+                )
+            ), 0) AS peakTimeOrders
+    </select>
+
 </mapper>

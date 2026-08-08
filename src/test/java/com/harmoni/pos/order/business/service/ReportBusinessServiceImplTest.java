@@ -3,6 +3,7 @@ package com.harmoni.pos.order.business.service;
 import com.harmoni.pos.order.mapper.ReportMapper;
 import com.harmoni.pos.order.model.DailyReport;
 import com.harmoni.pos.order.model.DailyProductReport;
+import com.harmoni.pos.order.model.OrderVolumeReport;
 import com.harmoni.pos.order.model.PaymentSummary;
 import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
@@ -133,5 +134,37 @@ class ReportBusinessServiceImplTest {
         assertEquals(BigDecimal.valueOf(150), result.get(0).getGrossSales());
         assertEquals(BigDecimal.valueOf(10), result.get(0).getDiscount());
         assertEquals(BigDecimal.valueOf(140), result.get(0).getNetSales());
+    }
+
+    @Test
+    void getOrderVolumeReport_shouldReturnReportWithNonPeakComputed() {
+        var storeId = 1;
+        var start = LocalDateTime.of(2025, 1, 1, 0, 0);
+        var end = LocalDateTime.of(2025, 1, 2, 0, 0);
+        var report = new OrderVolumeReport()
+                .setTotalOrders(100)
+                .setPeakTimeOrders(45);
+        when(reportMapper.getOrderVolumeReport(storeId, start, end)).thenReturn(report);
+
+        OrderVolumeReport result = reportBusinessService.getOrderVolumeReport(storeId, start, end);
+
+        assertEquals(100, result.getTotalOrders());
+        assertEquals(45, result.getPeakTimeOrders());
+        assertEquals(55, result.getNonPeakTimeOrders());
+    }
+
+    @Test
+    void getOrderVolumeReport_whenMapperReturnsNull_shouldReturnZeroedReport() {
+        var storeId = 1;
+        var start = LocalDateTime.of(2025, 1, 1, 0, 0);
+        var end = LocalDateTime.of(2025, 1, 2, 0, 0);
+        when(reportMapper.getOrderVolumeReport(storeId, start, end)).thenReturn(null);
+
+        OrderVolumeReport result = reportBusinessService.getOrderVolumeReport(storeId, start, end);
+
+        assertNotNull(result);
+        assertEquals(0, result.getTotalOrders());
+        assertEquals(0, result.getPeakTimeOrders());
+        assertEquals(0, result.getNonPeakTimeOrders());
     }
 }

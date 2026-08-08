@@ -3,6 +3,7 @@ package com.harmoni.pos.order.business.service;
 import com.harmoni.pos.order.business.service.menu.UserService;
 import com.harmoni.pos.order.mapper.ReportMapper;
 import com.harmoni.pos.order.model.DailyReport;
+import com.harmoni.pos.order.model.OrderVolumeReport;
 import com.harmoni.pos.order.model.PaymentSummary;
 import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
@@ -97,5 +98,35 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
     @Override
     public List<ProductSalesReport> getSalesReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
         return reportMapper.getSalesReport(storeId, start, end);
+    }
+
+    /**
+     * Retrieves the order volume report for the given store and time range.
+     * The peak-time order count is derived from the peak hour(s) of each day
+     * (the hour(s) with the most orders); non-peak time orders are the remainder.
+     *
+     * @param storeId the ID of the store to generate the report for
+     * @param start   the start datetime of the report range
+     * @param end     the end datetime of the report range
+     * @return an {@link OrderVolumeReport} containing total, peak, and non-peak order counts
+     */
+    @Override
+    public OrderVolumeReport getOrderVolumeReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
+        OrderVolumeReport report = reportMapper.getOrderVolumeReport(storeId, start, end);
+        if (report == null) {
+            report = new OrderVolumeReport()
+                    .setTotalOrders(0)
+                    .setPeakTimeOrders(0)
+                    .setNonPeakTimeOrders(0);
+            return report;
+        }
+
+        int totalOrders = report.getTotalOrders() == null ? 0 : report.getTotalOrders();
+        int peakTimeOrders = report.getPeakTimeOrders() == null ? 0 : report.getPeakTimeOrders();
+
+        return report
+                .setTotalOrders(totalOrders)
+                .setPeakTimeOrders(peakTimeOrders)
+                .setNonPeakTimeOrders(totalOrders - peakTimeOrders);
     }
 }

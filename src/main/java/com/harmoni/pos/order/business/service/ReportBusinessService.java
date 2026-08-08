@@ -1,6 +1,7 @@
 package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.model.DailyReport;
+import com.harmoni.pos.order.model.OrderVolumeReport;
 import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
 import com.harmoni.pos.order.model.TopProductReport;
@@ -55,4 +56,17 @@ public interface ReportBusinessService {
      * @return a list of {@link ProductSalesReport} grouped by product and category
      */
     List<ProductSalesReport> getSalesReport(Integer storeId, LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Retrieves the order volume report for a store within a given date-time range.
+     * Reports the total number of orders, the number of orders placed during the
+     * peak hour(s) of each day (the hour(s) with the most orders), and the number
+     * of orders placed outside of those peak hours.
+     *
+     * @param storeId the ID of the store
+     * @param start   the start datetime of the reporting period
+     * @param end     the end datetime of the reporting period
+     * @return an {@link OrderVolumeReport} with total, peak time, and non-peak time order counts
+     */
+    OrderVolumeReport getOrderVolumeReport(Integer storeId, LocalDateTime start, LocalDateTime end);
 }

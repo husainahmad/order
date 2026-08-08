@@ -118,6 +118,30 @@ public class ReportController {
     }
 
     /**
+     * Retrieves the order volume report for the authenticated user's store within
+     * a specific date-time range, showing the total number of orders, the number
+     * placed during each day's peak hour(s), and the number placed outside of them.
+     *
+     * <p><b>Endpoint:</b> GET /api/v1/reports/order-volume</p>
+     *
+     * @param start    the start date and time (ISO format), e.g., 2025-06-01T00:00:00
+     * @param end      the end date and time (ISO format), e.g., 2025-06-14T23:59:59
+     * @param username the username extracted from the X-Username header
+     * @return a ResponseEntity containing the order volume report in RestAPIResponse
+     */
+    @GetMapping("/order-volume")
+    public ResponseEntity<RestAPIResponse> getOrderVolumeReport(
+            @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
+            @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestHeader("X-Username") String username
+    ) {
+        RestAPIResponse restAPIResponse = RestAPIResponse.builder()
+                .data(reportBusinessService.getOrderVolumeReport(getUserDto(username).getStoreId(), start, end))
+                .build();
+        return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
+    }
+
+    /**
      * Retrieves the user information (UserDto) for the given username.
      *
      * @param username the username to look up

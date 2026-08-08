@@ -1,6 +1,7 @@
 package com.harmoni.pos.order.mapper;
 
 import com.harmoni.pos.order.model.DailyReport;
+import com.harmoni.pos.order.model.OrderVolumeReport;
 import com.harmoni.pos.order.model.PaymentSummary;
 import com.harmoni.pos.order.model.ProductSalesReport;
 import com.harmoni.pos.order.model.SettlementReport;
@@ -32,5 +33,9 @@ public interface ReportMapper {
     List<ProductSalesReport> getSalesReport(@Param("storeId") Integer storeId,
                                             @Param("start") LocalDateTime start,
                                             @Param("end") LocalDateTime end);
+
+    OrderVolumeReport getOrderVolumeReport(@Param("storeId") Integer storeId,
+                                           @Param("start") LocalDateTime start,
+                                           @Param("end") LocalDateTime end);
 
 }
