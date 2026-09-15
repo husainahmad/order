@@ -24,7 +24,7 @@ public class InternalServerExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RestAPIResponse> globalExceptionHandler(Exception exception) {
-        log.error("FightBegun: {}", exception.getMessage());
+        log.error("FightBegun: {}", exception.getMessage(), exception);
 
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
                 .httpStatus(HttpStatus.INTERNAL_SERVER_ERROR.value())
