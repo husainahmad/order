@@ -180,12 +180,76 @@ class OrderBusinessServiceImplTest {
         when(orderService.generateOrderNo(any())).thenReturn("ORD5-20250101000000-ABC123");
         when(orderDetailService.populateOrderDetail(any(), anyString()))
                 .thenReturn(List.of(new OrderDetail().setAmount(BigDecimal.valueOf(50))));
-        when(orderService.insert(any())).thenReturn(1);
+        when(orderService.insertWithIdempotency(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         Order result = orderBusinessService.confirm(orderDto, username);
 
         assertEquals(OrderStatus.CONFIRMED, result.getStatus());
-        verify(orderService).insert(result);
+        verify(orderService).insertWithIdempotency(result, null);
+    }
+
+    @Test
+    void confirm_withIdempotencyKey_whenNew_shouldPersistWithKey() {
+        var username = "test-user";
+        var orderDto = new OrderDto();
+        orderDto.setCustomerId(1);
+        orderDto.setOrderDetailDtos(List.of(new OrderDetailDto()));
+        var userDto = new UserDto()
+                .setStore(new StoreDto().setId(5));
+
+        when(userService.getUserDetail(username)).thenReturn(userDto);
+        when(orderService.generateOrderNo(any())).thenReturn("ORD5-20250101000000-ABC123");
+        when(orderDetailService.populateOrderDetail(any(), anyString()))
+                .thenReturn(List.of(new OrderDetail().setAmount(BigDecimal.valueOf(50))));
+        when(orderService.insertWithIdempotency(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Order result = orderBusinessService.confirm(orderDto, username, "idem-key-1");
+
+        assertEquals(OrderStatus.CONFIRMED, result.getStatus());
+        verify(orderService).insertWithIdempotency(result, "idem-key-1");
+    }
+
+    @Test
+    void confirm_withIdempotencyKey_whenExisting_shouldReturnExistingOrder() {
+        var existingOrder = new Order().setId(42).setOrderNo("ORD5-EXISTING");
+        var username = "test-user";
+        var orderDto = new OrderDto();
+        orderDto.setCustomerId(1);
+        orderDto.setOrderDetailDtos(List.of(new OrderDetailDto()));
+        var userDto = new UserDto()
+                .setStore(new StoreDto().setId(5));
+
+        when(userService.getUserDetail(username)).thenReturn(userDto);
+        when(orderService.generateOrderNo(any())).thenReturn("ORD5-20250101000000-ABC123");
+        when(orderDetailService.populateOrderDetail(any(), anyString()))
+                .thenReturn(List.of(new OrderDetail().setAmount(BigDecimal.valueOf(50))));
+        when(orderService.insertWithIdempotency(any(), eq("idem-key-1"))).thenReturn(existingOrder);
+
+        Order result = orderBusinessService.confirm(orderDto, username, "idem-key-1");
+
+        assertEquals(42, result.getId().intValue());
+        assertEquals("ORD5-EXISTING", result.getOrderNo());
+    }
+
+    @Test
+    void confirm_withIdempotencyKey_whenNullKey_shouldDelegateNormally() {
+        var username = "test-user";
+        var orderDto = new OrderDto();
+        orderDto.setCustomerId(1);
+        orderDto.setOrderDetailDtos(List.of(new OrderDetailDto()));
+        var userDto = new UserDto()
+                .setStore(new StoreDto().setId(5));
+
+        when(userService.getUserDetail(username)).thenReturn(userDto);
+        when(orderService.generateOrderNo(any())).thenReturn("ORD5-20250101000000-ABC123");
+        when(orderDetailService.populateOrderDetail(any(), anyString()))
+                .thenReturn(List.of(new OrderDetail().setAmount(BigDecimal.valueOf(50))));
+        when(orderService.insertWithIdempotency(any(), any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Order result = orderBusinessService.confirm(orderDto, username, null);
+
+        assertEquals(OrderStatus.CONFIRMED, result.getStatus());
+        verify(orderService).insertWithIdempotency(result, null);
     }
 
     @Test

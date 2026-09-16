@@ -56,7 +56,7 @@ class OrderControllerTest {
                 .setOrderNo("ORD1-20250101000000-ABC123")
                 .setStatus(OrderStatus.CONFIRMED);
 
-        when(orderBusinessService.confirm(any(OrderDto.class), anyString())).thenReturn(order);
+        when(orderBusinessService.confirm(any(OrderDto.class), anyString(), any())).thenReturn(order);
 
         mockMvc.perform(post("/api/v1/order")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -66,6 +66,35 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.orderNo").value("ORD1-20250101000000-ABC123"))
                 .andExpect(jsonPath("$.data.status").value("CONFIRMED"));
+    }
+
+    @Test
+    void createOrder_whenIdempotencyKeyHeaderPresent_shouldForwardKey() throws Exception {
+        var orderDetailDto = new OrderDetailDto();
+        orderDetailDto.setProductId(1);
+        orderDetailDto.setOrderDetailSkus(List.of());
+
+        var orderDto = new OrderDto();
+        orderDto.setCustomerId(1);
+        orderDto.setOrderDetailDtos(List.of(orderDetailDto));
+
+        var order = new Order()
+                .setId(1)
+                .setOrderNo("ORD1-20250101000000-ABC123")
+                .setStatus(OrderStatus.CONFIRMED);
+
+        when(orderBusinessService.confirm(any(OrderDto.class), anyString(), any())).thenReturn(order);
+
+        mockMvc.perform(post("/api/v1/order")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("X-Username", "test-user")
+                        .header("Idempotency-Key", "abc-123")
+                        .content(objectMapper.writeValueAsString(orderDto)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.id").value(1));
+
+        org.mockito.Mockito.verify(orderBusinessService)
+                .confirm(any(OrderDto.class), anyString(), org.mockito.ArgumentMatchers.eq("abc-123"));
     }
 
     @Test

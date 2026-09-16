@@ -30,6 +30,7 @@ public class Order {
     private OrderStatus status;
     private OrderPayment orderPayment;
     private String remark;
+    private String idempotencyKey;
     private Date createdAt;
     private Date updatedAt;
 }

@@ -132,10 +132,27 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
      */
     @Override
     public Order confirm(OrderDto orderDto, String username) {
+        return confirm(orderDto, username, null);
+    }
+
+    /**
+     * Confirms and persists a new order after performing calculations, applying
+     * idempotency based on the supplied key.
+     *
+     * <p>When {@code idempotencyKey} is non-blank and an order already exists for
+     * that key, the existing order is returned without creating a duplicate.
+     * Otherwise the key is stored alongside the newly created order.</p>
+     *
+     * @param orderDto       the order input DTO
+     * @param username       the username used to get user/store context
+     * @param idempotencyKey the client-supplied idempotency key, may be {@code null}
+     * @return the confirmed and persisted order
+     */
+    @Override
+    public Order confirm(OrderDto orderDto, String username, String idempotencyKey) {
         Order order = calculate(orderDto, username);
         order.setStatus(OrderStatus.CONFIRMED);
-        orderService.insert(order);
-        return order;
+        return orderService.insertWithIdempotency(order, idempotencyKey);
     }
 
     /**

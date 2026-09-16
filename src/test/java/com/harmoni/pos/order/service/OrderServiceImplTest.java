@@ -11,6 +11,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -119,5 +121,76 @@ class OrderServiceImplTest {
         int result = orderService.voidOrderById(order);
 
         assertEquals(1, result);
+    }
+
+    @Test
+    void insertWithIdempotency_whenKeyNull_shouldInsertNormally() {
+        var order = new Order()
+                .setId(1)
+                .setOrderDetails(List.of(new OrderDetail().setId(1)));
+        when(orderMapper.insert(order)).thenReturn(1);
+
+        Order result = orderService.insertWithIdempotency(order, null);
+
+        assertEquals(1, result.getId().intValue());
+        assertNull(result.getIdempotencyKey());
+        verify(orderMapper).insert(order);
+        verify(orderDetailService).insertBulk(any());
+    }
+
+    @Test
+    void insertWithIdempotency_whenKeyPresentAndNoExisting_shouldInsertWithKey() {
+        var order = new Order()
+                .setId(1)
+                .setOrderDetails(List.of(new OrderDetail().setId(1)));
+        when(orderMapper.selectByIdempotencyKey("idem-1")).thenReturn(null);
+        when(orderMapper.insert(order)).thenReturn(1);
+
+        Order result = orderService.insertWithIdempotency(order, "idem-1");
+
+        assertEquals("idem-1", result.getIdempotencyKey());
+        verify(orderMapper).insert(order);
+    }
+
+    @Test
+    void insertWithIdempotency_whenKeyPresentAndExisting_shouldReturnExisting() {
+        var existing = new Order().setId(99).setOrderNo("EXISTING");
+        var newOrder = new Order()
+                .setOrderDetails(List.of(new OrderDetail().setId(1)));
+        when(orderMapper.selectByIdempotencyKey("idem-1")).thenReturn(existing);
+
+        Order result = orderService.insertWithIdempotency(newOrder, "idem-1");
+
+        assertEquals(99, result.getId().intValue());
+        assertEquals("EXISTING", result.getOrderNo());
+        verify(orderMapper, never()).insert(any());
+    }
+
+    @Test
+    void insertWithIdempotency_whenDuplicateKeyOnInsert_shouldReturnExistingOrder() {
+        var existing = new Order().setId(99).setOrderNo("EXISTING");
+        var newOrder = new Order()
+                .setOrderDetails(List.of(new OrderDetail().setId(1)));
+        when(orderMapper.selectByIdempotencyKey("idem-1")).thenReturn(null, existing);
+        when(orderMapper.insert(newOrder)).thenThrow(new DuplicateKeyException("Duplicate"));
+
+        Order result = orderService.insertWithIdempotency(newOrder, "idem-1");
+
+        assertEquals(99, result.getId().intValue());
+        assertEquals("EXISTING", result.getOrderNo());
+    }
+
+    @Test
+    void insertWithIdempotency_whenBlankKey_shouldTreatAsNull() {
+        var order = new Order()
+                .setId(1)
+                .setOrderDetails(List.of(new OrderDetail().setId(1)));
+        when(orderMapper.insert(order)).thenReturn(1);
+
+        Order result = orderService.insertWithIdempotency(order, "   ");
+
+        assertNull(result.getIdempotencyKey());
+        verify(orderMapper, never()).selectByIdempotencyKey(any());
+        verify(orderMapper).insert(order);
     }
 }

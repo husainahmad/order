@@ -25,15 +25,18 @@ public class OrderController {
     /**
      * Creates a new order.
      *
-     * @param orderDto the order data transfer object
-     * @param username the username extracted from the X-Username header
+     * @param orderDto       the order data transfer object
+     * @param username       the username extracted from the X-Username header
+     * @param idempotencyKey optional client-supplied idempotency key; when present, a
+     *                       repeated request with the same key returns the existing order
      * @return a {@link ResponseEntity} containing the created order and HTTP status 201
      */
     @PostMapping("")
     public ResponseEntity<RestAPIResponse> createOrder(@Valid @RequestBody OrderDto orderDto,
-                                                       @RequestHeader("X-Username") String username) {
+                                                       @RequestHeader("X-Username") String username,
+                                                       @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
-                .data(orderBusinessService.confirm(orderDto, username))
+                .data(orderBusinessService.confirm(orderDto, username, idempotencyKey))
                 .build();
         return new ResponseEntity<>(restAPIResponse, HttpStatus.CREATED);
     }

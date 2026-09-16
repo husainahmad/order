@@ -2,6 +2,7 @@ package com.harmoni.pos.order.mapper;
 
 import com.harmoni.pos.order.model.Order;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -12,6 +13,7 @@ public interface OrderMapper {
     int deleteByPrimaryKey(Integer id);
     int insert(Order order);
     Order selectByPrimaryKey(Integer id);
+    Order selectByIdempotencyKey(@Param("idempotencyKey") String idempotencyKey);
     List<Order> selectByStoreId(Integer storeId, Timestamp from, Timestamp until);
     int updateByPrimaryKey(Order order);
     int voidById(Order order);

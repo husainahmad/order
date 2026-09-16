@@ -73,6 +73,21 @@ public interface OrderBusinessService {
     Order confirm(OrderDto orderDto, String username);
 
     /**
+     * Finalizes and persists the given order as a confirmed order, applying
+     * idempotency based on the supplied key.
+     *
+     * <p>If {@code idempotencyKey} is non-null and an order with that key already
+     * exists, the existing order is returned and no new order is created. Otherwise
+     * the key is stored with the newly created order.</p>
+     *
+     * @param orderDto       the DTO containing the order data to confirm
+     * @param username       the username used for user/store validation
+     * @param idempotencyKey the client-supplied idempotency key, may be {@code null}
+     * @return the confirmed {@link Order}
+     */
+    Order confirm(OrderDto orderDto, String username, String idempotencyKey);
+
+    /**
      * Prepares an order for printing purposes without saving it.
      *
      * @param orderDto the DTO containing the order data
