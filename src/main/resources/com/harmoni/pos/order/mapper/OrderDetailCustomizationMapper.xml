@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.harmoni.pos.order.mapper.OrderDetailCustomizationMapper">
+
+  <resultMap id="BaseResultMap" type="com.harmoni.pos.order.model.OrderDetailCustomization">
+    <id column="odc_id" jdbcType="BIGINT" property="id" />
+    <result column="odc_order_detail_id" jdbcType="INTEGER" property="orderDetailId" />
+    <result column="odc_customization_id" jdbcType="INTEGER" property="customizationId" />
+    <result column="odc_customization_name" jdbcType="VARCHAR" property="customizationName" />
+    <result column="odc_created_at" jdbcType="TIMESTAMP" property="createdAt" />
+    <result column="odc_updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+    <result column="odc_deleted_at" jdbcType="TIMESTAMP" property="deletedAt" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    odc.id as odc_id,
+    odc.order_detail_id as odc_order_detail_id,
+    odc.customization_id as odc_customization_id,
+    odc.customization_name as odc_customization_name,
+    odc.created_at as odc_created_at,
+    odc.updated_at as odc_updated_at,
+    odc.deleted_at as odc_deleted_at
+  </sql>
+
+  <insert id="insertBulk" useGeneratedKeys="true" keyProperty="id">
+    insert into order_detail_customizations
+    (order_detail_id, customization_id, customization_name, created_at, updated_at, deleted_at)
+    values
+    <foreach collection="list" item="row" separator=",">
+      (#{row.orderDetailId,jdbcType=INTEGER}, #{row.customizationId,jdbcType=INTEGER},
+       #{row.customizationName,jdbcType=VARCHAR}, #{row.createdAt,jdbcType=TIMESTAMP},
+       #{row.updatedAt,jdbcType=TIMESTAMP}, #{row.deletedAt,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
+
+  <select id="selectByOrderDetailIds" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from order_detail_customizations odc
+    where odc.order_detail_id in
+    <foreach collection="orderDetailIds" item="orderDetailId" open="(" separator="," close=")">
+      #{orderDetailId,jdbcType=INTEGER}
+    </foreach>
+      and odc.deleted_at is null
+    order by odc.order_detail_id asc, odc.id asc
+  </select>
+</mapper>

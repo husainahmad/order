@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.harmoni.pos.order.mapper.OrderItemDiscountMapper">
+
+  <resultMap id="BaseResultMap" type="com.harmoni.pos.order.model.OrderItemDiscount">
+    <id column="oid_id" jdbcType="BIGINT" property="id" />
+    <result column="oid_order_item_id" jdbcType="BIGINT" property="orderItemId" />
+    <result column="oid_promotion_id" jdbcType="BIGINT" property="promotionId" />
+    <result column="oid_promotion_code" jdbcType="VARCHAR" property="promotionCode" />
+    <result column="oid_promotion_name" jdbcType="VARCHAR" property="promotionName" />
+    <result column="oid_discount_type" jdbcType="VARCHAR" property="discountType"
+            javaType="com.harmoni.pos.order.model.DiscountType" />
+    <result column="oid_discount_value" jdbcType="DECIMAL" property="discountValue" />
+    <result column="oid_discount_amount" jdbcType="DECIMAL" property="discountAmount" />
+    <result column="oid_created_at" jdbcType="TIMESTAMP" property="createdAt" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    oid.id as oid_id,
+    oid.order_item_id as oid_order_item_id,
+    oid.promotion_id as oid_promotion_id,
+    oid.promotion_code as oid_promotion_code,
+    oid.promotion_name as oid_promotion_name,
+    oid.discount_type as oid_discount_type,
+    oid.discount_value as oid_discount_value,
+    oid.discount_amount as oid_discount_amount,
+    oid.created_at as oid_created_at
+  </sql>
+
+  <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+    insert into order_item_discounts (order_item_id, promotion_id, promotion_code, promotion_name,
+      discount_type, discount_value, discount_amount, created_at)
+    values
+    <foreach item="orderItemDiscount" index="index" collection="orderItemDiscounts" separator=",">
+      (#{orderItemDiscount.orderItemId,jdbcType=BIGINT}, #{orderItemDiscount.promotionId,jdbcType=BIGINT},
+      #{orderItemDiscount.promotionCode,jdbcType=VARCHAR}, #{orderItemDiscount.promotionName,jdbcType=VARCHAR},
+      #{orderItemDiscount.discountType,jdbcType=VARCHAR}, #{orderItemDiscount.discountValue,jdbcType=DECIMAL},
+      #{orderItemDiscount.discountAmount,jdbcType=DECIMAL}, #{orderItemDiscount.createdAt,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
+</mapper>

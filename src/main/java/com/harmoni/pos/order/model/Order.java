@@ -23,8 +23,13 @@ public class Order {
     private BigDecimal taxTotal;
     private Integer storeId;
     private StoreDto store;
+    /**
+     * The customer this sale was made to, or {@code -1} for a walk-in with no customer.
+     * That convention predates {@link OrderCustomer}, which uses null for the same case.
+     */
     private Integer customerId;
     private String customerName;
+    private String customerPhone;
     private Integer storeServiceTypesId;
     private List<OrderDetail> orderDetails;
     private OrderStatus status;

@@ -30,25 +30,26 @@ public class RestClientService implements Serializable {
     private static final String LOG_NO_CONTENT = "LOG_NO_CONTENT Server Response {}";
     private static final String LOG_UN_AUTHORIZED = "LOG_UN_AUTHORIZED Server Response {}";
     private static final String LOG_INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR Server Response {}";
-    private static final String BEARER = "Bearer ";
     private static final String X_USERNAME = "X-Username";
     private static final WebClient webClient = WebClient.builder().build();
 
     /**
-     * Sends a POST request to the given URL with the specified body and authorization token.
+     * Sends a POST request to the given URL, identifying the caller by username alone.
+     * <p>
+     * Use this for the internal service to service calls, which are made on behalf of an
+     * already authenticated operator and are not authorised with a bearer token. The
+     * {@code X-Username} header is what the target service resolves the acting store from.
      *
-     * @param token     JWT token for authorization
      * @param username  username forwarded to the target service
      * @param url       Target URL
      * @param publisher Reactive body content
      * @param className Type of the request body
      * @return Mono emitting {@link RestAPIResponse}
      */
-    public Mono<RestAPIResponse> post(String token, String username, String url, Publisher<?> publisher, Class<?> className) {
+    public Mono<RestAPIResponse> post(String username, String url, Publisher<?> publisher, Class<?> className) {
         return webClient.post()
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header(HttpHeaders.AUTHORIZATION, BEARER.concat(token))
                 .header(X_USERNAME, username)
                 .body(publisher, className)
                 .retrieve()
@@ -79,53 +80,6 @@ public class RestClientService implements Serializable {
         retrieve.onStatus(HttpStatus.UNAUTHORIZED::equals, this::handleUnAuthorized);
 
         return retrieve.bodyToMono(RestAPIResponse.class);
-    }
-
-    /**
-     * Sends a PUT request to the given URL with the specified body and authorization token.
-     *
-     * @param token     JWT token for authorization
-     * @param username  username forwarded to the target service
-     * @param url       Target URL
-     * @param publisher Reactive body content
-     * @param className Type of the request body
-     * @return Mono emitting {@link RestAPIResponse}
-     */
-    public Mono<RestAPIResponse> put(String token, String username, String url, Publisher<?> publisher, Class<?> className) {
-        return webClient.put()
-                .uri(url)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header(HttpHeaders.AUTHORIZATION, BEARER.concat(token))
-                .header(X_USERNAME, username)
-                .body(publisher, className)
-                .retrieve()
-                .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
-                .onStatus(HttpStatus.BAD_REQUEST::equals, this::handleBadRequest)
-                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, this::handleInternalServerError)
-                .onStatus(HttpStatus.UNAUTHORIZED::equals, this::handleUnAuthorized)
-                .bodyToMono(RestAPIResponse.class);
-    }
-
-    /**
-     * Sends a DELETE request to the given URL with the authorization token.
-     *
-     * @param token    JWT token for authorization
-     * @param username username forwarded to the target service
-     * @param url      Target URL
-     * @return Mono emitting {@link RestAPIResponse}
-     */
-    public Mono<RestAPIResponse> delete(String token, String username, String url) {
-        return webClient.delete()
-                .uri(url)
-                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .header(HttpHeaders.AUTHORIZATION, BEARER.concat(token))
-                .header(X_USERNAME, username)
-                .retrieve()
-                .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
-                .onStatus(HttpStatus.BAD_REQUEST::equals, this::handleBadRequest)
-                .onStatus(HttpStatus.INTERNAL_SERVER_ERROR::equals, this::handleInternalServerError)
-                .onStatus(HttpStatus.UNAUTHORIZED::equals, this::handleUnAuthorized)
-                .bodyToMono(RestAPIResponse.class);
     }
 
     private static void logError(String message, RestAPIResponse response) {

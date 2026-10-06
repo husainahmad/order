@@ -38,17 +38,23 @@
 
     <select id="getTopProducts" resultType="com.harmoni.pos.order.model.TopProductReport">
         SELECT
-            od.product_id,
-            od.product_name,
-            SUM(od.amount) AS total_sales,
-            SUM(od.quantity) AS quantity_sold
+            od.product_id AS productId,
+            od.product_name AS productName,
+            SUM(od.amount) AS totalSales,
+            COALESCE(SUM(sku_qty.quantity_sold), 0) AS quantitySold
         FROM order_details od
             JOIN orders o ON od.order_id = o.id
+            LEFT JOIN (
+                SELECT order_detail_id, SUM(quantity) AS quantity_sold
+                FROM order_detail_skus
+                GROUP BY order_detail_id
+            ) sku_qty ON sku_qty.order_detail_id = od.id
         WHERE o.store_id = #{storeId}
-            AND od.created_at BETWEEN #{start} AND #{end}
-            GROUP BY od.product_id, od.product_name
-            ORDER BY quantity_sold DESC
-            LIMIT #{limit}
+            AND o.status = 'PAID'
+            AND o.created_at BETWEEN #{start} AND #{end}
+        GROUP BY od.product_id, od.product_name
+        ORDER BY quantitySold DESC
+        LIMIT #{limit}
     </select>
 
     <resultMap id="DailyReportMap" type="com.harmoni.pos.order.model.DailyReport">

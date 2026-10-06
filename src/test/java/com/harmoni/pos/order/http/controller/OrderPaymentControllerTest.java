@@ -2,7 +2,6 @@ package com.harmoni.pos.order.http.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harmoni.pos.order.business.service.OrderPaymentBusinessService;
-import com.harmoni.pos.order.component.JwtUtil;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.OrderPayment;
 import com.harmoni.pos.order.model.OrderStatus;
@@ -35,9 +34,6 @@ class OrderPaymentControllerTest {
 
     @MockBean
     private OrderPaymentBusinessService orderPaymentBusinessService;
-
-    @MockBean
-    private JwtUtil jwtUtil;
 
     @Test
     void payOrder_shouldReturn201() throws Exception {

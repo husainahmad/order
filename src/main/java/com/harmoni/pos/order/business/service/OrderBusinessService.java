@@ -1,7 +1,9 @@
 package com.harmoni.pos.order.business.service;
 
+import com.harmoni.pos.order.model.CalculatedOrder;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.dto.OrderDto;
+import com.harmoni.pos.order.model.dto.UserDto;
 
 import java.util.List;
 
@@ -28,13 +30,18 @@ public interface OrderBusinessService {
     void calculateServiceCharge(Order order);
 
     /**
-     * Calculates and applies the discount from the order DTO.
-     * Automatically recalculates the grand total afterward.
+     * Prices the order's lines against the promotion catalogue and sets the resulting
+     * discount on the order, then recalculates the grand total.
+     * <p>
+     * The discount comes from the menu service, which owns the promotions. Nothing the
+     * client submitted is consulted, so a client cannot choose its own discount.
      *
-     * @param order     the order object to apply the discount to
-     * @param orderDto  the source DTO containing the discount information
+     * @param order    the order to apply the discount to
+     * @param userDto  the acting operator, used for the store and its time zone
+     * @param username the operator the sale is being made for
+     * @return the order together with the discount granted on each line
      */
-    void calculateDiscount(Order order, OrderDto orderDto);
+    CalculatedOrder calculateDiscount(Order order, UserDto userDto, String username);
 
     /**
      * Calculates and applies tax to the order.
@@ -62,6 +69,17 @@ public interface OrderBusinessService {
      * @return the fully calculated {@link Order}
      */
     Order calculate(OrderDto orderDto, String username);
+
+    /**
+     * Performs a full calculation and keeps hold of the promotion discount granted on each
+     * line, for {@link #confirm(OrderDto, String, String)} to record once the order rows
+     * exist.
+     *
+     * @param orderDto the DTO containing the incoming order data
+     * @param username the username used for fetching user/store context
+     * @return the calculated order and its per line promotion discount
+     */
+    CalculatedOrder calculateWithPromotions(OrderDto orderDto, String username);
 
     /**
      * Finalizes and persists the given order as a confirmed order.

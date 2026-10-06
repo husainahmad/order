@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.harmoni.pos.order.mapper.OrderDetailCustomizationOptionMapper">
+
+  <resultMap id="BaseResultMap" type="com.harmoni.pos.order.model.OrderDetailCustomizationOption">
+    <id column="odco_id" jdbcType="BIGINT" property="id" />
+    <result column="odco_order_detail_customizations_id" jdbcType="BIGINT" property="orderDetailCustomizationId" />
+    <result column="odco_customization_options_id" jdbcType="INTEGER" property="customizationOptionsId" />
+    <result column="odco_customization_option_name" jdbcType="VARCHAR" property="customizationOptionName" />
+    <result column="odco_quantity" jdbcType="INTEGER" property="quantity" />
+    <result column="odco_price" jdbcType="DECIMAL" property="price" />
+    <result column="odco_amount" jdbcType="DECIMAL" property="amount" />
+    <result column="odco_created_at" jdbcType="TIMESTAMP" property="createdAt" />
+    <result column="odco_updated_at" jdbcType="TIMESTAMP" property="updatedAt" />
+    <result column="odco_deleted_at" jdbcType="TIMESTAMP" property="deletedAt" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    odco.id as odco_id,
+    odco.order_detail_customizations_id as odco_order_detail_customizations_id,
+    odco.customization_options_id as odco_customization_options_id,
+    odco.customization_option_name as odco_customization_option_name,
+    odco.quantity as odco_quantity,
+    odco.price as odco_price,
+    odco.amount as odco_amount,
+    odco.created_at as odco_created_at,
+    odco.updated_at as odco_updated_at,
+    odco.deleted_at as odco_deleted_at
+  </sql>
+
+  <insert id="insertBulk" useGeneratedKeys="true" keyProperty="id">
+    insert into order_detail_customization_options
+    (order_detail_customizations_id, customization_options_id, customization_option_name,
+     quantity, price, amount, created_at, updated_at, deleted_at)
+    values
+    <foreach collection="list" item="row" separator=",">
+      (#{row.orderDetailCustomizationId,jdbcType=BIGINT}, #{row.customizationOptionsId,jdbcType=INTEGER},
+       #{row.customizationOptionName,jdbcType=VARCHAR}, #{row.quantity,jdbcType=INTEGER},
+       #{row.price,jdbcType=DECIMAL}, #{row.amount,jdbcType=DECIMAL},
+       #{row.createdAt,jdbcType=TIMESTAMP}, #{row.updatedAt,jdbcType=TIMESTAMP}, #{row.deletedAt,jdbcType=TIMESTAMP})
+    </foreach>
+  </insert>
+</mapper>

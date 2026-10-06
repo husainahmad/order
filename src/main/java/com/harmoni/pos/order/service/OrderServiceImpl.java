@@ -4,18 +4,24 @@ import com.harmoni.pos.order.exception.BusinessNoContentRequestException;
 import com.harmoni.pos.order.mapper.OrderMapper;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.OrderDetail;
+import com.harmoni.pos.order.model.OrderDetailSku;
+import com.harmoni.pos.order.model.OrderDetailCustomization;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link OrderService} that provides business logic
@@ -34,6 +40,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderMapper orderMapper;
     private final OrderDetailService orderDetailService;
+    private final OrderDetailCustomizationService orderDetailCustomizationService;
 
     /**
      * Generates a unique order number based on the store ID, current timestamp, and a random string.
@@ -100,7 +107,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(transactionManager = "transactionSQLTransactionManager")
     public Order insertWithIdempotency(Order order, String idempotencyKey) {
         if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            Order existing = orderMapper.selectByIdempotencyKey(idempotencyKey);
+            Order existing = findByIdempotencyKey(idempotencyKey);
             if (existing != null) {
                 return existing;
             }
@@ -111,7 +118,7 @@ public class OrderServiceImpl implements OrderService {
             insert(order);
         } catch (DuplicateKeyException e) {
             if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-                Order existing = orderMapper.selectByIdempotencyKey(idempotencyKey);
+                Order existing = findByIdempotencyKey(idempotencyKey);
                 if (existing != null) {
                     return existing;
                 }
@@ -136,6 +143,7 @@ public class OrderServiceImpl implements OrderService {
             throw new BusinessNoContentRequestException(
                     BusinessNoContentRequestException.NO_CONTENT, null);
         }
+        attachCustomizations(List.of(order));
         return order;
     }
 
@@ -147,7 +155,11 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public Order findByIdempotencyKey(String idempotencyKey) {
-        return orderMapper.selectByIdempotencyKey(idempotencyKey);
+        Order order = orderMapper.selectByIdempotencyKey(idempotencyKey);
+        if (order != null) {
+            attachCustomizations(List.of(order));
+        }
+        return order;
     }
 
     /**
@@ -160,7 +172,68 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public List<Order> selectByStoreId(Integer storeId, Timestamp from, Timestamp until) {
-        return orderMapper.selectByStoreId(storeId, from, until);
+        List<Order> orders = orderMapper.selectByStoreId(storeId, from, until);
+        attachCustomizations(orders);
+        return orders;
+    }
+
+    /**
+     * Puts each line's customization choices back on the line they belong to.
+     * <p>
+     * The order queries join orders to details to lines but not to
+     * {@code order_detail_sku_customizations}, because that join multiplies every row by the
+     * number of choices on a line and the order mapper has no way to nest three levels of
+     * collection. So the choices are fetched separately and grouped by line here. Doing it
+     * here rather than in each caller is what stops the read paths drifting apart: an order
+     * returned for a receipt and the same order returned by a list endpoint should describe
+     * itself the same way, and a customised line that silently came back bare would print a
+     * receipt that does not match the sale.
+     * <p>
+     * A line with no choices is left with the field unset rather than an empty list, matching
+     * how a freshly built order behaves: the field is {@code NON_NULL}, so a plain line says
+     * nothing about customizations rather than claiming it had none.
+     *
+     * @param orders the orders just read, each already carrying its lines
+     */
+    private void attachCustomizations(List<Order> orders) {
+        if (ObjectUtils.isEmpty(orders)) {
+            return;
+        }
+
+        List<Integer> detailIds = orders.stream()
+                .filter(Objects::nonNull)
+                .map(Order::getOrderDetails)
+                .filter(details -> !ObjectUtils.isEmpty(details))
+                .flatMap(List::stream)
+                .map(OrderDetail::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+
+        if (detailIds.isEmpty()) {
+            return;
+        }
+
+        List<OrderDetailCustomization> customizations =
+                orderDetailCustomizationService.getByOrderDetailIds(detailIds);
+        if (ObjectUtils.isEmpty(customizations)) {
+            return;
+        }
+
+        Map<Integer, List<OrderDetailCustomization>> byDetail = customizations.stream()
+                .collect(Collectors.groupingBy(OrderDetailCustomization::getOrderDetailId));
+
+        for (Order order : orders) {
+            if (order == null || ObjectUtils.isEmpty(order.getOrderDetails())) {
+                continue;
+            }
+            for (OrderDetail orderDetail : order.getOrderDetails()) {
+                List<OrderDetailCustomization> forDetail = byDetail.get(orderDetail.getId());
+                if (!ObjectUtils.isEmpty(forDetail)) {
+                    orderDetail.setCustomizations(forDetail);
+                }
+            }
+        }
     }
 
     /**

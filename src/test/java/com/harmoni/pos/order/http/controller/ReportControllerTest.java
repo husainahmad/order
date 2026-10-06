@@ -2,7 +2,6 @@ package com.harmoni.pos.order.http.controller;
 
 import com.harmoni.pos.order.business.service.ReportBusinessService;
 import com.harmoni.pos.order.business.service.menu.UserService;
-import com.harmoni.pos.order.component.JwtUtil;
 import com.harmoni.pos.order.model.DailyReport;
 import com.harmoni.pos.order.model.DailyProductReport;
 import com.harmoni.pos.order.model.OrderVolumeReport;
@@ -40,9 +39,6 @@ class ReportControllerTest {
 
     @MockBean
     private ReportBusinessService reportBusinessService;
-
-    @MockBean
-    private JwtUtil jwtUtil;
 
     @Test
     void getSettlementReport_shouldReturn200() throws Exception {

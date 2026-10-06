@@ -1,22 +1,19 @@
 package com.harmoni.pos.order.business.service.menu;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harmoni.pos.order.business.service.rest.RestClientService;
 import com.harmoni.pos.order.config.MenuProperties;
+import com.harmoni.pos.order.exception.BusinessBadRequestException;
 import com.harmoni.pos.order.http.response.RestAPIResponse;
-import com.harmoni.pos.order.model.dto.ProductDto;
-import com.harmoni.pos.order.model.dto.SkuDto;
+import com.harmoni.pos.order.model.dto.ValidateOrderItemsRequestDto;
+import com.harmoni.pos.order.model.dto.ValidateOrderItemsResponseDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.util.UriComponentsBuilder;
+import reactor.core.publisher.Mono;
 
 import java.io.Serializable;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 /**
  * Service class responsible for fetching menu-related data such as SKUs with prices and products with names.
@@ -37,48 +34,39 @@ public class MenuService implements Serializable {
             .configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 
     /**
-     * Retrieves a list of {@link SkuDto} including price information for the given list of SKU IDs.
+     * Asks the menu service to confirm a whole basket and to name and price every line in it.
+     * <p>
+     * The menu service owns the catalogue. It knows which products a store sells, which SKU
+     * prices apply at that store's tier, and what a customization choice costs, so it both
+     * checks the basket and resolves the names and prices. This service passes on the IDs,
+     * the quantities and the chosen options, and stores what comes back.
+     * <p>
+     * One call for the basket rather than one per line. Priced a line at a time, an order of
+     * six items with options on each needs seven round trips and seven separate readings of
+     * the catalogue, and a basket can straddle a rename or a re-tier between them.
      *
-     * @param ids      a list of SKU ID integers
-     * @param username username forwarded to the menu service
-     * @return a list of {@link SkuDto} with price data, or an empty list if no data is returned
+     * @param request  the store and the lines being ordered
+     * @param username the operator the call is made on behalf of
+     * @return the confirmed lines, carrying the catalogue's names and prices
+     * @throws BusinessBadRequestException if the menu service could not be reached or
+     *         answered with nothing, since a basket that was never checked cannot be sold
      */
-    public List<SkuDto> getSkusWithPrice(List<Integer> ids, String username) {
-        String encodedIds = ids.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
+    public ValidateOrderItemsResponseDto validateOrderItems(ValidateOrderItemsRequestDto request,
+                                                            String username) {
+        RestAPIResponse restAPIResponse = restClientService
+                .post(username, menuProperties.getValidateOrderItems(), Mono.just(request),
+                        ValidateOrderItemsRequestDto.class)
+                .block();
 
-        String finalUrl = UriComponentsBuilder.fromHttpUrl(menuProperties.getSkuPrice())
-                .queryParam("ids", encodedIds)
-                .toUriString();
+        if (restAPIResponse == null || restAPIResponse.getData() == null) {
+            // Deliberately not an empty answer. Silence here has to be distinguishable from
+            // a genuinely empty basket: dropping a line that was never checked would sell
+            // something the catalogue may no longer stock, at no price, with nothing in the
+            // order to say why.
+            throw new BusinessBadRequestException("exception.validateOrderItems.unavailable", null);
+        }
 
-        RestAPIResponse restAPIResponse = restClientService.get(username, finalUrl).block();
-
-        return Optional.ofNullable(restAPIResponse)
-                .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<List<SkuDto>>() {}))
-                .orElse(List.of());
-    }
-
-    /**
-     * Retrieves a list of {@link ProductDto} with name and metadata for the given product IDs.
-     *
-     * @param ids      a list of product ID integers
-     * @param username username forwarded to the menu service
-     * @return a list of {@link ProductDto} with names and attributes, or an empty list if no data is returned
-     */
-    public List<ProductDto> getProductWithName(List<Integer> ids, String username) {
-        String encodedIds = ids.stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining(","));
-
-        String finalUrl = UriComponentsBuilder.fromHttpUrl(menuProperties.getProduct())
-                .queryParam("ids", encodedIds)
-                .toUriString();
-
-        RestAPIResponse restAPIResponse = restClientService.get(username, finalUrl).block();
-
-        return Optional.ofNullable(restAPIResponse)
-                .map(response -> objectMapper.convertValue(response.getData(), new TypeReference<List<ProductDto>>() {}))
-                .orElse(List.of());
+        return objectMapper.convertValue(restAPIResponse.getData(),
+                ValidateOrderItemsResponseDto.class);
     }
 }

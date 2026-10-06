@@ -52,9 +52,8 @@ auth.url.delete=${auth.url}/api/v1/user
 auth.url.update=${auth.url}/api/v1/user
 
 menu.url=http://localhost:8080
-menu.url.product=${menu.url}/api/v1/product
-menu.url.sku=${menu.url}/api/v1/sku
-menu.url.sku-price=${menu.url}/api/v1/sku/price
+menu.url.validate-order-items=${menu.url}/internal/v1/menu/validate-order-items
 menu.url.store=${menu.url}/api/v1/store
 menu.url.user=${menu.url}/api/v1/user
+menu.url.promotion-price=${menu.url}/api/v1/promotion/price
 

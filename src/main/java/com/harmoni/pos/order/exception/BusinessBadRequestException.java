@@ -15,16 +15,6 @@ import lombok.Getter;
 public class BusinessBadRequestException extends RuntimeException {
 
     /**
-     * Error code for tier ID not found.
-     */
-    public static final String NOT_FOUND_TIER = "exception.tier.id.badRequest.notFound";
-
-    /**
-     * Error code for duplicated tier.
-     */
-    public static final String DUPLICATION_TIER = "exception.tier.badRequest.duplicate";
-
-    /**
      * A message code or human-readable message associated with this exception.
      */
     private final String message;

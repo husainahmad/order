@@ -13,6 +13,7 @@ public class OrderDto {
 
     private Integer customerId;
     private String customerName;
+    private String customerPhone;
     private Integer storeServiceTypesId;
     private BigDecimal discount;
     private String remark;
@@ -24,6 +25,7 @@ public class OrderDto {
         return new Order()
                 .setCustomerId(customerId)
                 .setCustomerName(customerName)
+                .setCustomerPhone(customerPhone)
                 .setRemark(remark)
                 .setStoreServiceTypesId(storeServiceTypesId);
     }
