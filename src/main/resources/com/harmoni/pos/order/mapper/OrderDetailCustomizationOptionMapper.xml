@@ -28,6 +28,18 @@
     odco.deleted_at as odco_deleted_at
   </sql>
 
+  <select id="selectByCustomizationIds" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from order_detail_customization_options odco
+    where odco.order_detail_customizations_id in
+    <foreach collection="customizationIds" item="customizationId" open="(" separator="," close=")">
+      #{customizationId,jdbcType=BIGINT}
+    </foreach>
+      and odco.deleted_at is null
+    order by odco.order_detail_customizations_id asc, odco.id asc
+  </select>
+
   <insert id="insertBulk" useGeneratedKeys="true" keyProperty="id">
     insert into order_detail_customization_options
     (order_detail_customizations_id, customization_options_id, customization_option_name,

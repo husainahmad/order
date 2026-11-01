@@ -39,4 +39,12 @@ public class OrderDetailCustomizationOptionServiceImpl implements OrderDetailCus
         });
         return optionMapper.insertBulk(rows);
     }
+
+    @Override
+    public List<OrderDetailCustomizationOption> getByCustomizationIds(List<Long> customizationIds) {
+        if (ObjectUtils.isEmpty(customizationIds)) {
+            return List.of();
+        }
+        return optionMapper.selectByCustomizationIds(customizationIds);
+    }
 }

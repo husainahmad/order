@@ -12,6 +12,9 @@ import org.springframework.util.ObjectUtils;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service("orderDetailCustomizationService")
 @RequiredArgsConstructor
@@ -57,11 +60,48 @@ public class OrderDetailCustomizationServiceImpl implements OrderDetailCustomiza
         return rows.size();
     }
 
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The options are read in a second batch and hung back on the groups they belong to,
+     * rather than joined into the group query. A group with three options would otherwise
+     * repeat its own row three times, and the caller would have to de-duplicate groups
+     * that are conceptually one row. Two queries for the whole basket is the same order of
+     * cost as one, and keeps each row meaning exactly one thing.
+     */
     @Override
     public List<OrderDetailCustomization> getByOrderDetailIds(List<Integer> orderDetailIds) {
         if (ObjectUtils.isEmpty(orderDetailIds)) {
             return List.of();
         }
-        return customizationMapper.selectByOrderDetailIds(orderDetailIds);
+        List<OrderDetailCustomization> groups = customizationMapper.selectByOrderDetailIds(orderDetailIds);
+        if (ObjectUtils.isEmpty(groups)) {
+            return List.of();
+        }
+
+        List<Long> customizationIds = groups.stream()
+                .map(OrderDetailCustomization::getId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .collect(Collectors.toList());
+        if (customizationIds.isEmpty()) {
+            return groups;
+        }
+
+        // A group with no options stays with the field unset: the model is NON_NULL, so a
+        // group that genuinely had nothing chosen says nothing rather than showing an empty
+        // list on the receipt.
+        Map<Long, List<OrderDetailCustomizationOption>> optionsByGroup =
+                optionService.getByCustomizationIds(customizationIds).stream()
+                        .filter(option -> option.getOrderDetailCustomizationId() != null)
+                        .collect(Collectors.groupingBy(OrderDetailCustomizationOption::getOrderDetailCustomizationId));
+
+        for (OrderDetailCustomization group : groups) {
+            List<OrderDetailCustomizationOption> options = optionsByGroup.get(group.getId());
+            if (!ObjectUtils.isEmpty(options)) {
+                group.setOptions(options);
+            }
+        }
+        return groups;
     }
 }

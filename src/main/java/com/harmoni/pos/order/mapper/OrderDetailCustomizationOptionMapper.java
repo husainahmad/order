@@ -9,4 +9,12 @@ import java.util.List;
 public interface OrderDetailCustomizationOptionMapper {
 
     int insertBulk(List<OrderDetailCustomizationOption> rows);
+
+    /**
+     * Reads the options chosen under the given customization groups.
+     *
+     * @param customizationIds the {@code order_detail_customizations} row ids
+     * @return the options, ordered by their group and then by insertion order
+     */
+    List<OrderDetailCustomizationOption> selectByCustomizationIds(List<Long> customizationIds);
 }
