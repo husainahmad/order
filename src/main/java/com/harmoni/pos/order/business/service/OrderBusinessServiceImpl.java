@@ -8,6 +8,7 @@ import com.harmoni.pos.order.model.OrderDetail;
 import com.harmoni.pos.order.model.OrderDetailSku;
 import com.harmoni.pos.order.model.OrderItemDiscount;
 import com.harmoni.pos.order.model.Order;
+import com.harmoni.pos.order.model.OrderPage;
 import com.harmoni.pos.order.model.OrderStatus;
 import com.harmoni.pos.order.model.dto.OrderDto;
 import com.harmoni.pos.order.model.dto.UserDto;
@@ -46,6 +47,26 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
      * already used this value, so it is kept rather than replaced with null.
      */
     private static final int WALK_IN_CUSTOMER_ID = -1;
+
+    /**
+     * How many orders a page holds when the caller does not say. Large enough that a busy
+     * lunch service scrolls a couple of screens before asking again, small enough that the
+     * response stays quick to render.
+     */
+    private static final int DEFAULT_PAGE_SIZE = 50;
+
+    /**
+     * The most orders one page may hold. A client asking for more is given this instead:
+     * the endpoint joins every line and choice of every order it returns, so an unbounded
+     * page is a way to make the service do arbitrary work.
+     */
+    private static final int MAX_PAGE_SIZE = 200;
+
+    /**
+     * Milliseconds in a day, used to turn the inclusive start of today into the exclusive
+     * start of tomorrow.
+     */
+    private static final long DAY_MILLIS = 24L * 60 * 60 * 1000;
 
     private final OrderService orderService;
     private final OrderDetailService orderDetailService;
@@ -331,5 +352,43 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         Timestamp until = dailyRange[1];
 
         return orderService.selectByStoreId(userDto.getStore().getId(), from, until);
+    }
+
+    /**
+     * {@inheritDoc}
+     * <p>
+     * The end of "today" is exclusive rather than 23:59:59, so an order confirmed in the
+     * final second of the day — which a datetime with fractional seconds can hold — is not
+     * dropped from the list.
+     */
+    @Override
+    public OrderPage getDailyPageByStore(String username, Integer beforeId, Integer limit) {
+        UserDto userDto = userService.getUserDetail(username);
+        ZoneId zoneId = ZoneId.of(userDto.getStore().getTimeZone());
+
+        Timestamp[] dailyRange = getDailyTimeRange(zoneId);
+        Timestamp from = dailyRange[0];
+        Timestamp untilExclusive = new Timestamp(dailyRange[0].getTime() + DAY_MILLIS);
+
+        int size = limit == null || limit <= 0
+                ? DEFAULT_PAGE_SIZE
+                : Math.min(limit, MAX_PAGE_SIZE);
+
+        // One extra row is asked for, purely to learn whether another page exists without a
+        // second counting query. It is dropped before answering.
+        List<Order> fetched = orderService.selectByStoreIdPaged(
+                userDto.getStore().getId(), from, untilExclusive, beforeId, size + 1);
+
+        boolean hasMore = fetched.size() > size;
+        List<Order> page = hasMore ? fetched.subList(0, size) : fetched;
+        Integer nextCursor = null;
+        if (hasMore && !page.isEmpty()) {
+            Order last = page.get(page.size() - 1);
+            nextCursor = last == null ? null : last.getId();
+        }
+        return new OrderPage()
+                .setOrders(page)
+                .setHasMore(hasMore)
+                .setNextCursor(nextCursor);
     }
 }

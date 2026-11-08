@@ -75,7 +75,14 @@ class OrderDetailServiceImplTest {
     }
 
     @Test
-    void insertBulk_shouldRecordCustomizationsAgainstTheDetailId() {
+    void insertBulk_shouldRecordCustomizationsAgainstTheDetailAndSkuLine() {
+        // The insert is what generates line ids; stand in for the driver filling them.
+        doAnswer(invocation -> {
+            List<OrderDetailSku> inserted = invocation.getArgument(0);
+            inserted.forEach(sku -> sku.setId(5001));
+            return null;
+        }).when(orderDetailSkuService).insertBulk(any());
+
         var option = new OrderDetailCustomizationOption()
                 .setCustomizationOptionsId(101)
                 .setCustomizationOptionName("Large")
@@ -85,7 +92,9 @@ class OrderDetailServiceImplTest {
                 .setCustomizationId(1)
                 .setCustomizationName("Size")
                 .setOptions(List.of(option));
-        var detail = new OrderDetail().setId(1).setOrderDetailSkus(List.of(new OrderDetailSku().setSkuId(1))).setCustomizations(List.of(customization));
+        var sku = new OrderDetailSku().setSkuId(1);
+        var detail = new OrderDetail().setId(1).setOrderDetailSkus(List.of(sku))
+                .setCustomizations(List.of(customization.setOrderDetailSku(sku)));
 
         orderDetailService.insertBulk(List.of(detail));
 
@@ -94,11 +103,29 @@ class OrderDetailServiceImplTest {
         List<OrderDetailCustomization> recorded = captor.getValue();
         assertEquals(1, recorded.size());
         assertEquals(1, recorded.get(0).getOrderDetailId().intValue());
+        // The generated line id is copied on, so the row can be traced to its variant.
+        assertEquals(5001, recorded.get(0).getOrderDetailSkuId().intValue());
         assertEquals(1, recorded.get(0).getCustomizationId().intValue());
         assertEquals("Size", recorded.get(0).getCustomizationName());
         assertNotNull(recorded.get(0).getCreatedAt());
         assertEquals(1, recorded.get(0).getOptions().size());
         assertEquals(101, recorded.get(0).getOptions().get(0).getCustomizationOptionsId().intValue());
+    }
+
+    @Test
+    void insertBulk_shouldLeaveTheSkuLinkNullWhenTheChoiceNamesNoLine() {
+        var customization = new OrderDetailCustomization()
+                .setCustomizationId(1)
+                .setCustomizationName("Size")
+                .setOptions(List.of());
+        var detail = new OrderDetail().setId(1).setOrderDetailSkus(List.of(new OrderDetailSku().setSkuId(1)))
+                .setCustomizations(List.of(customization));
+
+        orderDetailService.insertBulk(List.of(detail));
+
+        ArgumentCaptor<List<OrderDetailCustomization>> captor = ArgumentCaptor.forClass(List.class);
+        verify(orderDetailCustomizationService).record(captor.capture());
+        assertNull(captor.getValue().get(0).getOrderDetailSkuId());
     }
 
     @Test
@@ -336,6 +363,50 @@ class OrderDetailServiceImplTest {
     @Test
     void aChoiceThatStatesNoCountShouldBeSentAsOne() {
         assertEquals(1, new CustomizationOptionSelectionDto().getQuantity());
+    }
+
+    /**
+     * A product sold as two variants keeps each variant's choices apart. Before the SKU
+     * link, Big (Hot) and Regular (Ice) were merged into one Temperature group, so the
+     * order claimed the product was both hot and iced.
+     */
+    @Test
+    void populateOrderDetail_shouldKeepEachVariantsChoicesWithItsOwnLine() {
+        givenConfirmedBasket(List.of(
+                confirmedLine(1, 100, "Caramel Macchiato", "Big", "50", 1,
+                        List.of(confirmedChoice(12, "Hot", "0", 1))),
+                confirmedLine(1, 200, "Caramel Macchiato", "Regular", "40", 1,
+                        List.of(confirmedChoice(11, "Ice", "0", 1)))));
+
+        List<OrderDetail> result = orderDetailService.populateOrderDetail(
+                List.of(basketWith(1, List.of(100, 200), List.of(1, 1),
+                        List.of(choices(12), choices(11)))),
+                7, "test-user");
+
+        List<OrderDetailCustomization> recorded = result.get(0).getCustomizations();
+        assertEquals(2, recorded.size(), "one Temperature group per variant");
+        assertEquals("Hot", recorded.get(0).getOptions().get(0).getCustomizationOptionName());
+        assertEquals("Ice", recorded.get(1).getOptions().get(0).getCustomizationOptionName());
+        // The link the receipt needs: which line each choice was made on.
+        assertNotNull(recorded.get(0).getOrderDetailSku());
+        assertNotNull(recorded.get(1).getOrderDetailSku());
+        assertNotSame(recorded.get(0).getOrderDetailSku(), recorded.get(1).getOrderDetailSku());
+        assertEquals(100, recorded.get(0).getOrderDetailSku().getSkuId().intValue());
+        assertEquals(200, recorded.get(1).getOrderDetailSku().getSkuId().intValue());
+    }
+
+    @Test
+    void populateOrderDetail_shouldStillMergeGroupsWithinOneLine() {
+        givenConfirmedBasket(List.of(confirmedLine(1, 100, "Coffee", "Regular", "50", 1,
+                List.of(confirmedChoice(11, "Large", "1.00", 1),
+                        confirmedChoice(12, "Small", "0.00", 1)))));
+
+        List<OrderDetail> result = orderDetailService.populateOrderDetail(
+                List.of(basketWith(1, 100, 1, choices(11, 12))), 7, "test-user");
+
+        List<OrderDetailCustomization> recorded = result.get(0).getCustomizations();
+        assertEquals(1, recorded.size(), "same line and same group stay one group");
+        assertEquals(2, recorded.get(0).getOptions().size());
     }
 
     @Test

@@ -72,6 +72,32 @@ public class OrderController {
     }
 
     /**
+     * Retrieves one page of the current store's orders for today, newest first.
+     *
+     * <p><b>Endpoint:</b> GET /api/v1/order/page?limit=50&amp;beforeId=9577</p>
+     *
+     * <p>The response is <code>{ orders, nextCursor, hasMore }</code>. Pass the
+     * {@code nextCursor} back as {@code beforeId} to append the next page; {@code hasMore}
+     * is false on the last one. The cursor is an order id rather than an offset so a sale
+     * confirmed while the cashier is scrolling cannot make the next page repeat a row.</p>
+     *
+     * @param username the username extracted from the X-Username header
+     * @param limit    the most orders to return; defaults to 50, capped at 200
+     * @param beforeId return only orders older than this id; omit it for the first page
+     * @return a {@link ResponseEntity} containing the page and HTTP status 200
+     */
+    @GetMapping("/page")
+    public ResponseEntity<RestAPIResponse> getOrderPage(
+            @RequestHeader("X-Username") String username,
+            @RequestParam(value = "limit", required = false) Integer limit,
+            @RequestParam(value = "beforeId", required = false) Integer beforeId) {
+        RestAPIResponse restAPIResponse = RestAPIResponse.builder()
+                .data(orderBusinessService.getDailyPageByStore(username, beforeId, limit))
+                .build();
+        return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
+    }
+
+    /**
      * Voids an order by its ID.
      *
      * @param orderId  the ID of the order to be voided

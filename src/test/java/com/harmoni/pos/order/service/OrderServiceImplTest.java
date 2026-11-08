@@ -210,6 +210,10 @@ class OrderServiceImplTest {
                 .setOrderDetails(details);
     }
 
+    private static OrderDetailCustomization customizationOnSku(Integer detailId, Integer skuId, Integer optionId) {
+        return customizationOn(detailId, optionId).setOrderDetailSkuId(skuId);
+    }
+
     private static OrderDetailCustomization customizationOn(Integer detailId, Integer optionId) {
         var option = new OrderDetailCustomizationOption()
                 .setCustomizationOptionsId(optionId)
@@ -257,6 +261,51 @@ class OrderServiceImplTest {
     }
 
     /**
+     * A product read back with two variants keeps each variant's choices on its own line.
+     * Grouping only by detail put both Temperature options on the product, so a receipt
+     * could not say which cup was hot and which was iced.
+     */
+    @Test
+    void selectByPrimaryKey_shouldReconnectEachChoiceToItsSkuLine() {
+        var big = new OrderDetailSku().setId(9001).setSkuId(100).setSkuName("Big");
+        var regular = new OrderDetailSku().setId(9002).setSkuId(200).setSkuName("Regular");
+        var detail = new OrderDetail().setId(900).setOrderDetailSkus(List.of(big, regular));
+        var order = new Order().setId(7).setOrderDetails(List.of(detail));
+        when(orderMapper.selectByPrimaryKey(7)).thenReturn(order);
+        when(orderDetailCustomizationService.getByOrderDetailIds(List.of(900)))
+                .thenReturn(List.of(customizationOnSku(900, 9001, 12), customizationOnSku(900, 9002, 11)));
+
+        Order result = orderService.selectByPrimaryKey(7);
+
+        List<OrderDetailCustomization> choices = result.getOrderDetails().get(0).getCustomizations();
+        assertEquals(2, choices.size());
+        assertSame(big, choices.get(0).getOrderDetailSku());
+        assertSame(regular, choices.get(1).getOrderDetailSku());
+        assertEquals(9001, choices.get(0).getOrderDetailSkuId().intValue());
+        assertEquals(9002, choices.get(1).getOrderDetailSkuId().intValue());
+    }
+
+    @Test
+    void aChoiceFromBeforeTheLineLinkShouldStayOnTheProductAndNotBeGuessed() {
+        var sku = new OrderDetailSku().setId(9001).setSkuId(100);
+        var detail = new OrderDetail().setId(900).setOrderDetailSkus(List.of(sku));
+        var order = new Order().setId(7).setOrderDetails(List.of(detail));
+        when(orderMapper.selectByPrimaryKey(7)).thenReturn(order);
+        when(orderDetailCustomizationService.getByOrderDetailIds(List.of(900)))
+                .thenReturn(List.of(customizationOn(900, 101)));
+
+        Order result = orderService.selectByPrimaryKey(7);
+
+        OrderDetailCustomization choice = result.getOrderDetails().get(0).getCustomizations().get(0);
+        assertNull(choice.getOrderDetailSkuId());
+        assertNull(choice.getOrderDetailSku());
+    }
+
+    /**
+     * The field is NON_NULL, so a plain detail has to come back with nothing on it rather than
+     * an empty list. An empty list would claim the detail was checked and had no choices, which
+     * is not the same as saying nothing about it.
+     */    /**
      * The field is NON_NULL, so a plain detail has to come back with nothing on it rather than
      * an empty list. An empty list would claim the detail was checked and had no choices, which
      * is not the same as saying nothing about it.

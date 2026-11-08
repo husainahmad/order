@@ -3,9 +3,9 @@
 
 <mapper namespace="com.harmoni.pos.order.mapper.OrderDetailSkuMapper">
   <resultMap id="BaseResultMap" type="com.harmoni.pos.order.model.OrderDetailSku">
-    <id column="id" jdbcType="INTEGER" property="id" />
+    <id column="order_detail_sku_id" jdbcType="INTEGER" property="id" />
     <result column="order_detail_sku_order_detail_id" jdbcType="INTEGER" property="orderDetailId" />
-    <result column="order_detail_sku_id" jdbcType="INTEGER" property="skuId" />
+    <result column="order_detail_sku_sku_id" jdbcType="INTEGER" property="skuId" />
     <result column="order_detail_sku_sku_name" jdbcType="VARCHAR" property="skuName" />
     <result column="order_detail_sku_quantity" jdbcType="INTEGER" property="quantity" />
     <result column="order_detail_sku_price" jdbcType="DOUBLE" property="price" />

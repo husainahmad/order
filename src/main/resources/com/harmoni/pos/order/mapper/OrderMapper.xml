@@ -74,6 +74,41 @@
     order by o.id desc
   </select>
 
+  <!--
+    One page of orders, newest first.
+
+    The inner query is what the LIMIT applies to: it selects order ids only, so a page
+    boundary always falls between orders. Joining first and limiting afterwards would cut
+    an order off mid-way and return it missing lines.
+
+    id < beforeId is the cursor. An OFFSET would be simpler to read but wrong here: a new
+    order arriving between two page requests shifts every row down by one, so the next page
+    repeats the last row of the previous one.
+  -->
+  <select id="selectByStoreIdPaged" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailMapper.Base_Column_List"/>,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailSkuMapper.Base_Column_List"/>,
+    <include refid="com.harmoni.pos.order.mapper.OrderPaymentMapper.Base_Column_List"/>
+    from (
+      select page.id from orders page
+      where page.store_id = #{storeId,jdbcType=INTEGER}
+        and page.created_at &gt;= #{from,javaType=java.sql.Timestamp,jdbcType=TIMESTAMP}
+        and page.created_at &lt; #{until,javaType=java.sql.Timestamp,jdbcType=TIMESTAMP}
+      <if test="beforeId != null">
+        and page.id &lt; #{beforeId,jdbcType=INTEGER}
+      </if>
+      order by page.id desc
+      limit #{limit}
+    ) AS page_window
+    join orders o on o.id = page_window.id
+    left join order_details order_detail on o.id = order_detail.order_id
+    left join order_detail_skus order_detail_sku on order_detail.id = order_detail_sku.order_detail_id
+    left join order_payments order_payment on order_payment.order_id = o.id
+    order by o.id desc
+  </select>
+
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from orders
     where id = #{id,jdbcType=INTEGER}

@@ -9,6 +9,7 @@ import com.harmoni.pos.order.model.OrderDetailCustomization;
 import com.harmoni.pos.order.model.OrderDetailCustomizationOption;
 import com.harmoni.pos.order.model.OrderDetailSku;
 import com.harmoni.pos.order.model.OrderItemDiscount;
+import com.harmoni.pos.order.model.OrderPage;
 import com.harmoni.pos.order.model.OrderStatus;
 import com.harmoni.pos.order.model.dto.OrderDto;
 import com.harmoni.pos.order.model.dto.OrderDetailDto;
@@ -742,5 +743,70 @@ class OrderBusinessServiceImplTest {
         List<Order> result = orderBusinessService.getDailyListByStore(username);
 
         assertEquals(1, result.size());
+    }
+
+    /**
+     * A full page means there is probably more behind it, so the cursor points at the last
+     * order returned and the caller can ask again without re-reading anything.
+     */
+    @Test
+    void getDailyPageByStore_shouldReturnACursorWhenThePageIsFull() {
+        when(userService.getUserDetail("test-user")).thenReturn(userDto());
+        // One more than the page size is fetched to find out whether another page exists.
+        when(orderService.selectByStoreIdPaged(any(), any(Timestamp.class), any(Timestamp.class),
+                any(), eq(3)))
+                .thenReturn(List.of(new Order().setId(9), new Order().setId(8), new Order().setId(7)));
+
+        OrderPage page = orderBusinessService.getDailyPageByStore("test-user", null, 2);
+
+        assertEquals(2, page.getOrders().size());
+        assertEquals(9, page.getOrders().get(0).getId().intValue());
+        assertEquals(8, page.getOrders().get(1).getId().intValue());
+        assertTrue(page.isHasMore());
+        // The extra row is dropped and the cursor is the last order actually returned.
+        assertEquals(8, page.getNextCursor().intValue());
+    }
+
+    @Test
+    void getDailyPageByStore_shouldStopWhenThePageIsNotFull() {
+        when(userService.getUserDetail("test-user")).thenReturn(userDto());
+        when(orderService.selectByStoreIdPaged(any(), any(Timestamp.class), any(Timestamp.class),
+                any(), eq(3)))
+                .thenReturn(List.of(new Order().setId(9)));
+
+        OrderPage page = orderBusinessService.getDailyPageByStore("test-user", null, 2);
+
+        assertEquals(1, page.getOrders().size());
+        assertFalse(page.isHasMore());
+        assertNull(page.getNextCursor());
+    }
+
+    @Test
+    void getDailyPageByStore_shouldPassTheCursorThrough() {
+        when(userService.getUserDetail("test-user")).thenReturn(userDto());
+        when(orderService.selectByStoreIdPaged(any(), any(Timestamp.class), any(Timestamp.class),
+                eq(42), anyInt()))
+                .thenReturn(List.of());
+
+        orderBusinessService.getDailyPageByStore("test-user", 42, 10);
+
+        verify(orderService).selectByStoreIdPaged(any(), any(Timestamp.class), any(Timestamp.class),
+                eq(42), anyInt());
+    }
+
+    @Test
+    void getDailyPageByStore_shouldClampThePageSize() {
+        when(userService.getUserDetail("test-user")).thenReturn(userDto());
+        when(orderService.selectByStoreIdPaged(any(), any(Timestamp.class), any(Timestamp.class),
+                any(), anyInt())).thenReturn(List.of());
+
+        orderBusinessService.getDailyPageByStore("test-user", null, 10_000);
+        verify(orderService).selectByStoreIdPaged(any(), any(Timestamp.class), any(Timestamp.class),
+                any(), eq(201));
+
+        // No size stated falls back to the default of 50, plus the look-ahead row.
+        orderBusinessService.getDailyPageByStore("test-user", null, null);
+        verify(orderService).selectByStoreIdPaged(any(), any(Timestamp.class), any(Timestamp.class),
+                any(), eq(51));
     }
 }

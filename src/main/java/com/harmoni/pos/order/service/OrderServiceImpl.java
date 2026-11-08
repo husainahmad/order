@@ -178,6 +178,20 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
+     * {@inheritDoc}
+     * <p>
+     * The choices are read in one batch for the whole page, exactly as the unpaged read
+     * does, so paging adds no query per order.
+     */
+    @Override
+    public List<Order> selectByStoreIdPaged(Integer storeId, Timestamp from, Timestamp until,
+                                            Integer beforeId, int limit) {
+        List<Order> orders = orderMapper.selectByStoreIdPaged(storeId, from, until, beforeId, limit);
+        attachCustomizations(orders);
+        return orders;
+    }
+
+    /**
      * Puts each line's customization choices back on the line they belong to.
      * <p>
      * The order queries join orders to details to lines but not to
@@ -229,9 +243,41 @@ public class OrderServiceImpl implements OrderService {
             }
             for (OrderDetail orderDetail : order.getOrderDetails()) {
                 List<OrderDetailCustomization> forDetail = byDetail.get(orderDetail.getId());
-                if (!ObjectUtils.isEmpty(forDetail)) {
-                    orderDetail.setCustomizations(forDetail);
+                if (ObjectUtils.isEmpty(forDetail)) {
+                    continue;
                 }
+                // Each choice names the SKU line it was made on, so hang it back on that
+                // line as well. Big (Hot) and Regular (Ice) are two groups on one product
+                // here, and a reader that only looked at the detail would have no way to
+                // tell which cup either belonged to.
+                attachToSkuLines(orderDetail, forDetail);
+                orderDetail.setCustomizations(forDetail);
+            }
+        }
+    }
+
+    /**
+     * Reconnects each read customization group to the line it names.
+     * <p>
+     * The row keeps {@code orderDetailSkuId} as its durable link; this also points the
+     * transient {@code orderDetailSku} at the actual line object, so a caller holding the
+     * response can walk from a choice to its variant without a second lookup. Groups with
+     * no line id were written before the column existed: they stay on the product line and
+     * are left unlinked rather than guessed onto the first SKU.
+     *
+     * @param orderDetail the product line whose choices were just read
+     * @param groups      the choices read for that line
+     */
+    private static void attachToSkuLines(OrderDetail orderDetail, List<OrderDetailCustomization> groups) {
+        if (ObjectUtils.isEmpty(orderDetail.getOrderDetailSkus())) {
+            return;
+        }
+        Map<Integer, OrderDetailSku> skusById = orderDetail.getOrderDetailSkus().stream()
+                .filter(sku -> sku != null && sku.getId() != null)
+                .collect(Collectors.toMap(OrderDetailSku::getId, sku -> sku, (a, b) -> a));
+        for (OrderDetailCustomization group : groups) {
+            if (group.getOrderDetailSkuId() != null) {
+                group.setOrderDetailSku(skusById.get(group.getOrderDetailSkuId()));
             }
         }
     }

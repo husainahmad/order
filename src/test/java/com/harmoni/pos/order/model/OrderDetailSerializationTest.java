@@ -77,6 +77,19 @@ class OrderDetailSerializationTest {
     }
 
     @Test
+    void aChoiceShouldSerializeTheLineItBelongsToButNotTheTransientLink() throws Exception {
+        OrderDetailSku big = new OrderDetailSku().setId(9001).setSkuName("Big");
+        var customization = customization().setOrderDetailSku(big).setOrderDetailSkuId(9001);
+
+        String json = objectMapper.writeValueAsString(customization);
+
+        assertTrue(json.contains("\"orderDetailSkuId\":9001"),
+                "the client needs the line id to place the choice under the right variant");
+        assertFalse(json.contains("\"orderDetailSku\""),
+                "the in-memory link to the line is not part of the payload");
+    }
+
+    @Test
     void anUncustomisedUndiscountedOrderShouldOmitBothLists() throws Exception {
         Order order = new Order()
                 .setId(7)

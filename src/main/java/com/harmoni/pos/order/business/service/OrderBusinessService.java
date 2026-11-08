@@ -2,6 +2,7 @@ package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.model.CalculatedOrder;
 import com.harmoni.pos.order.model.Order;
+import com.harmoni.pos.order.model.OrderPage;
 import com.harmoni.pos.order.model.dto.OrderDto;
 import com.harmoni.pos.order.model.dto.UserDto;
 
@@ -130,4 +131,18 @@ public interface OrderBusinessService {
      * @return a list of today's orders for the store
      */
     List<Order> getDailyListByStore(String username);
+
+    /**
+     * One page of the current store's orders for the current day, newest first.
+     * <p>
+     * The cursor is the id of the last order the caller already has. Passing it back as
+     * {@code beforeId} returns the orders older than that one, which is what makes the
+     * list appendable without repeating or skipping rows while new orders are being taken.
+     *
+     * @param username the username used to determine the store and time zone
+     * @param beforeId return only orders older than this id; {@code null} for the first page
+     * @param limit    the most orders to return, clamped to the allowed range
+     * @return the page, newest first
+     */
+    OrderPage getDailyPageByStore(String username, Integer beforeId, Integer limit);
 }

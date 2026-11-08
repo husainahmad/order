@@ -88,6 +88,14 @@ public class OrderDetailServiceImpl implements OrderDetailService {
             }
         }
         orderDetailSkuService.insertBulk(orderDetailSkus);
+        // The SKU lines now have their ids, so each choice can be filed against the line it
+        // was made for. This has to happen after the insert — the id it copies is generated
+        // by that statement — and before the choices are written.
+        for (OrderDetailCustomization customization : customizations) {
+            if (customization.getOrderDetailSku() != null) {
+                customization.setOrderDetailSkuId(customization.getOrderDetailSku().getId());
+            }
+        }
         orderDetailCustomizationService.record(customizations);
     }
 
@@ -252,28 +260,20 @@ public class OrderDetailServiceImpl implements OrderDetailService {
             amount = amount.add(sku.getAmount());
         }
 
+        // Each SKU line keeps its own choices. Merging them by customization alone put
+        // both variants' Temperature options in one group, so an order with Big (Hot) and
+        // Regular (Ice) claimed the product was both hot and iced.
         List<OrderDetailCustomization> customizations = new ArrayList<>();
-        for (ConfirmedLine line : lines) {
-            customizations.addAll(toOrderCustomizations(line.answer().getCustomizations(), line.line().skuDto().getQuantity()));
+        for (int index = 0; index < lines.size(); index++) {
+            ConfirmedLine line = lines.get(index);
+            OrderDetailSku sku = skus.get(index);
+            for (OrderDetailCustomization customization : toOrderCustomizations(
+                    line.answer().getCustomizations(), line.line().skuDto().getQuantity())) {
+                customization.setOrderDetailSku(sku);
+                customizations.add(customization);
+            }
         }
-        // merge groups by customizationId
-        Map<Integer, List<OrderDetailCustomization>> grouped = customizations.stream()
-                .collect(Collectors.groupingBy(c -> c.getCustomizationId() == null ? -1 : c.getCustomizationId()));
-        List<OrderDetailCustomization> merged = grouped.entrySet().stream()
-                .map(e -> {
-                    List<OrderDetailCustomization> list = e.getValue();
-                    OrderDetailCustomization g = new OrderDetailCustomization()
-                            .setCustomizationId(list.get(0).getCustomizationId())
-                            .setCustomizationName(list.get(0).getCustomizationName());
-                    List<OrderDetailCustomizationOption> opts = new ArrayList<>();
-                    for (OrderDetailCustomization c : list) {
-                        if (c.getOptions() != null) {
-                            opts.addAll(c.getOptions());
-                        }
-                    }
-                    g.setOptions(opts);
-                    return g;
-                }).collect(Collectors.toList());
+        List<OrderDetailCustomization> merged = mergeCustomizationsPerSku(customizations);
 
         BigDecimal surchargeTotal = merged.stream()
                 .filter(g -> g.getOptions() != null)
@@ -361,6 +361,47 @@ public class OrderDetailServiceImpl implements OrderDetailService {
                     return group;
                 })
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Collapses the choices of each SKU line into one group per customization.
+     * <p>
+     * Grouping is by SKU as well as by customization: a product sold as two variants
+     * holds two Temperature groups, one per line, each carrying only what that variant was
+     * ordered with. Grouping by customization alone is what lost the association — the
+     * options of both variants ended up under a single group with nothing saying which
+     * line they belonged to.
+     * <p>
+     * Order follows the SKU lines, then the customization id, so a receipt lists the first
+     * variant's choices before the second's.
+     *
+     * @param customizations every group built for the product line, each knowing its SKU line
+     * @return one group per (SKU line, customization)
+     */
+    private static List<OrderDetailCustomization> mergeCustomizationsPerSku(
+            List<OrderDetailCustomization> customizations) {
+        // Matched on object identity, not equals: two SKU lines can be field-identical
+        // (same variant ordered twice) and their choices must still stay apart. A linear
+        // walk keeps the lines and their customizations in the order they were sent.
+        List<OrderDetailCustomization> merged = new ArrayList<>();
+        for (OrderDetailCustomization candidate : customizations) {
+            OrderDetailCustomization existing = merged.stream()
+                    .filter(group -> group.getOrderDetailSku() == candidate.getOrderDetailSku()
+                            && Objects.equals(group.getCustomizationId(), candidate.getCustomizationId()))
+                    .findFirst()
+                    .orElse(null);
+            if (existing == null) {
+                merged.add(new OrderDetailCustomization()
+                        .setCustomizationId(candidate.getCustomizationId())
+                        .setCustomizationName(candidate.getCustomizationName())
+                        .setOrderDetailSku(candidate.getOrderDetailSku())
+                        .setOptions(candidate.getOptions() == null
+                                ? new ArrayList<>() : new ArrayList<>(candidate.getOptions())));
+            } else if (candidate.getOptions() != null) {
+                existing.getOptions().addAll(candidate.getOptions());
+            }
+        }
+        return merged;
     }
 
     private static BigDecimal zeroIfNull(BigDecimal value) {
