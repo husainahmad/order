@@ -22,7 +22,7 @@ public interface ReportBusinessService {
      * @param end     the end datetime of the reporting period
      * @return a {@link SettlementReport} containing aggregated sales, voids, and payment info
      */
-    SettlementReport generateSettlementReport(Integer storeId, LocalDateTime start, LocalDateTime end);
+    SettlementReport generateSettlementReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end);
 
     /**
      * Retrieves the top-selling products for a store within a specified time period.
@@ -33,7 +33,7 @@ public interface ReportBusinessService {
      * @param limit   the maximum number of top products to return
      * @return a list of {@link TopProductReport} ordered by sales volume or revenue
      */
-    List<TopProductReport> getTopProducts(Integer storeId, LocalDateTime start, LocalDateTime end, int limit);
+    List<TopProductReport> getTopProducts(List<Integer> storeIds, LocalDateTime start, LocalDateTime end, int limit);
 
     /**
      * Retrieves a daily report for a store within a given date-time range.
@@ -44,7 +44,7 @@ public interface ReportBusinessService {
      * @param end     the end datetime of the reporting period
      * @return a list of {@link DailyReport} grouped by day
      */
-    List<DailyReport> getDailyReport(Integer storeId, LocalDateTime start, LocalDateTime end);
+    List<DailyReport> getDailyReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end);
 
     /**
      * Retrieves the sales report for a store within a given date-time range,
@@ -55,7 +55,7 @@ public interface ReportBusinessService {
      * @param end     the end datetime of the reporting period
      * @return a list of {@link ProductSalesReport} grouped by product and category
      */
-    List<ProductSalesReport> getSalesReport(Integer storeId, LocalDateTime start, LocalDateTime end);
+    List<ProductSalesReport> getSalesReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end);
 
     /**
      * Retrieves the order volume report for a store within a given date-time range.
@@ -68,5 +68,5 @@ public interface ReportBusinessService {
      * @param end     the end datetime of the reporting period
      * @return an {@link OrderVolumeReport} with total, peak time, and non-peak time order counts
      */
-    OrderVolumeReport getOrderVolumeReport(Integer storeId, LocalDateTime start, LocalDateTime end);
+    OrderVolumeReport getOrderVolumeReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end);
 }

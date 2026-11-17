@@ -11,6 +11,26 @@
         <result property="totalRefunds" column="total_refunds"/>
     </resultMap>
 
+    <sql id="StoreFilter">
+        <if test="storeIds != null and storeIds.size() > 0">
+            AND store_id IN
+            <foreach item="id" collection="storeIds" open="(" separator="," close=")">#{id}</foreach>
+        </if>
+        <if test="storeIds != null and storeIds.size() == 0">
+            AND 1 = 0
+        </if>
+    </sql>
+
+    <sql id="StoreFilterO">
+        <if test="storeIds != null and storeIds.size() > 0">
+            AND o.store_id IN
+            <foreach item="id" collection="storeIds" open="(" separator="," close=")">#{id}</foreach>
+        </if>
+        <if test="storeIds != null and storeIds.size() == 0">
+            AND 1 = 0
+        </if>
+    </sql>
+
     <select id="getSettlementReport" resultMap="SettlementReportMap">
         SELECT
         COUNT(*) AS total_orders,
@@ -18,10 +38,13 @@
         SUM(discount_total) AS total_discounts,
         SUM(tax_total) AS total_tax,
         SUM(grand_total - discount_total + tax_total) AS total_net_sales,
-        (SELECT SUM(grand_total) FROM orders WHERE status = 'REFUNDED' AND created_at BETWEEN #{start} AND #{end}) AS total_refunds
+        (SELECT SUM(grand_total) FROM orders
+         WHERE status = 'REFUNDED' AND created_at BETWEEN #{start} AND #{end}
+         <include refid="StoreFilter"/>) AS total_refunds
         FROM orders
         WHERE created_at BETWEEN #{start} AND #{end}
         AND status = 'PAID'
+        <include refid="StoreFilter"/>
     </select>
 
     <select id="getPaymentBreakdown" resultType="com.harmoni.pos.order.model.PaymentSummary">
@@ -33,6 +56,7 @@
         JOIN orders o ON op.order_id = o.id
         WHERE o.created_at BETWEEN #{start} AND #{end}
         AND o.status = 'PAID'
+        <include refid="StoreFilterO"/>
         GROUP BY p.name
     </select>
 
@@ -49,9 +73,9 @@
                 FROM order_detail_skus
                 GROUP BY order_detail_id
             ) sku_qty ON sku_qty.order_detail_id = od.id
-        WHERE o.store_id = #{storeId}
-            AND o.status = 'PAID'
+        WHERE o.status = 'PAID'
             AND o.created_at BETWEEN #{start} AND #{end}
+            <include refid="StoreFilterO"/>
         GROUP BY od.product_id, od.product_name
         ORDER BY quantitySold DESC
         LIMIT #{limit}
@@ -83,9 +107,9 @@
                 FROM order_detail_skus
                 GROUP BY order_detail_id
             ) sku_qty ON sku_qty.order_detail_id = od.id
-        WHERE o.store_id = #{storeId}
-            AND o.status = 'PAID'
+        WHERE o.status = 'PAID'
             AND o.created_at BETWEEN #{start} AND #{end}
+            <include refid="StoreFilterO"/>
         GROUP BY DATE(o.created_at), od.product_id, od.product_name
         ORDER BY report_date, quantity DESC
     </select>
@@ -107,9 +131,9 @@
                 FROM order_detail_skus
                 GROUP BY order_detail_id
             ) sku_qty ON sku_qty.order_detail_id = od.id
-        WHERE o.store_id = #{storeId}
-            AND o.status = 'PAID'
+        WHERE o.status = 'PAID'
             AND o.created_at BETWEEN #{start} AND #{end}
+            <include refid="StoreFilterO"/>
         GROUP BY od.category_id, od.category_name, od.product_id, od.product_name
         ORDER BY od.category_name, quantity DESC
     </select>
@@ -121,14 +145,14 @@
                 HOUR(created_at) AS hour_of_day,
                 COUNT(*) AS order_count
             FROM orders
-            WHERE store_id = #{storeId}
-                AND created_at BETWEEN #{start} AND #{end}
+            WHERE created_at BETWEEN #{start} AND #{end}
+                <include refid="StoreFilter"/>
             GROUP BY DATE(created_at), HOUR(created_at)
         )
         SELECT
             (SELECT COUNT(*) FROM orders
-             WHERE store_id = #{storeId}
-               AND created_at BETWEEN #{start} AND #{end}) AS totalOrders,
+             WHERE created_at BETWEEN #{start} AND #{end}
+               <include refid="StoreFilter"/>) AS totalOrders,
             COALESCE((
                 SELECT SUM(order_count)
                 FROM hourly

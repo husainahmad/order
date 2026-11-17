@@ -15,26 +15,28 @@ import java.util.List;
 @Mapper
 public interface ReportMapper {
 
-    SettlementReport getSettlementReport(@Param("start") LocalDateTime start,
+    SettlementReport getSettlementReport(@Param("storeIds") List<Integer> storeIds,
+                                         @Param("start") LocalDateTime start,
                                          @Param("end") LocalDateTime end);
 
-    List<PaymentSummary> getPaymentBreakdown(@Param("start") LocalDateTime start,
+    List<PaymentSummary> getPaymentBreakdown(@Param("storeIds") List<Integer> storeIds,
+                                             @Param("start") LocalDateTime start,
                                              @Param("end") LocalDateTime end);
 
-    List<TopProductReport> getTopProducts(@Param("storeId") Integer storeId,
+    List<TopProductReport> getTopProducts(@Param("storeIds") List<Integer> storeIds,
                                           @Param("start") LocalDateTime start,
                                           @Param("end") LocalDateTime end,
                                           @Param("limit") int limit);
 
-    List<DailyReport> getDailyReport(@Param("storeId") Integer storeId,
+    List<DailyReport> getDailyReport(@Param("storeIds") List<Integer> storeIds,
                                      @Param("start") LocalDateTime start,
                                      @Param("end") LocalDateTime end);
 
-    List<ProductSalesReport> getSalesReport(@Param("storeId") Integer storeId,
+    List<ProductSalesReport> getSalesReport(@Param("storeIds") List<Integer> storeIds,
                                             @Param("start") LocalDateTime start,
                                             @Param("end") LocalDateTime end);
 
-    OrderVolumeReport getOrderVolumeReport(@Param("storeId") Integer storeId,
+    OrderVolumeReport getOrderVolumeReport(@Param("storeIds") List<Integer> storeIds,
                                            @Param("start") LocalDateTime start,
                                            @Param("end") LocalDateTime end);
 

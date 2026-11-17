@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -32,6 +33,7 @@ public class OrderController {
      * @return a {@link ResponseEntity} containing the created order and HTTP status 201
      */
     @PostMapping("")
+    @PreAuthorize("hasAnyAuthority('order:view', 'terminal:view', 'availability:view', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> createOrder(@Valid @RequestBody OrderDto orderDto,
                                                        @RequestHeader("X-Username") String username,
                                                        @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
@@ -49,6 +51,7 @@ public class OrderController {
      * @return a {@link ResponseEntity} containing print result and HTTP status 200
      */
     @PostMapping("/print")
+    @PreAuthorize("hasAnyAuthority('order:view', 'terminal:view', 'availability:view', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> printOrder(@Valid @RequestBody OrderDto orderDto,
                                                        @RequestHeader("X-Username") String username) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
@@ -64,6 +67,7 @@ public class OrderController {
      * @return a {@link ResponseEntity} containing the list of today's orders and HTTP status 201
      */
     @GetMapping("")
+    @PreAuthorize("hasAnyAuthority('order:view', 'terminal:view', 'availability:view', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getListOrder(@RequestHeader("X-Username") String username) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
                 .data(orderBusinessService.getDailyListByStore(username))
@@ -87,6 +91,7 @@ public class OrderController {
      * @return a {@link ResponseEntity} containing the page and HTTP status 200
      */
     @GetMapping("/page")
+    @PreAuthorize("hasAnyAuthority('order:view', 'terminal:view', 'availability:view', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getOrderPage(
             @RequestHeader("X-Username") String username,
             @RequestParam(value = "limit", required = false) Integer limit,
@@ -105,6 +110,7 @@ public class OrderController {
      * @return a {@link ResponseEntity} containing the result of the void operation and HTTP status 200
      */
     @PutMapping("/{orderId}/void")
+    @PreAuthorize("hasAnyAuthority('order:approve', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> voidOrder(@PathVariable Integer orderId,
                                                       @RequestHeader("X-Username") String username) {
         RestAPIResponse response = RestAPIResponse.builder()

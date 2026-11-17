@@ -287,6 +287,7 @@ public class OrderDetailServiceImpl implements OrderDetailService {
                 .setProductName(product.getProductName())
                 .setCategoryId(product.getCategoryId())
                 .setCategoryName(product.getCategoryName())
+                .setRemark(lines.get(0).line().orderDetailDto().getRemark())
                 .setOrderDetailSkus(skus)
                 .setCustomizations(merged.isEmpty() ? null : merged)
                 .setAmount(amount.add(surchargeTotal));

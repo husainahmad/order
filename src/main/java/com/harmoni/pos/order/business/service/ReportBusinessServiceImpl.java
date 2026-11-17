@@ -38,13 +38,13 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
      * @return a {@link SettlementReport} containing summarized sales data and payment breakdown
      */
     @Override
-    public SettlementReport generateSettlementReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
+    public SettlementReport generateSettlementReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end) {
 
         // Fetch main report data
-        SettlementReport report = reportMapper.getSettlementReport(start, end);
+        SettlementReport report = reportMapper.getSettlementReport(storeIds, start, end);
 
         // Fetch payment breakdown
-        List<PaymentSummary> paymentSummaries = reportMapper.getPaymentBreakdown(start, end);
+        List<PaymentSummary> paymentSummaries = reportMapper.getPaymentBreakdown(storeIds, start, end);
 
         // Convert list to Map for easy access in the report
         Map<String, BigDecimal> paymentBreakdown = new HashMap<>();
@@ -68,8 +68,8 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
      * @return a list of {@link TopProductReport} items sorted by sales volume
      */
     @Override
-    public List<TopProductReport> getTopProducts(Integer storeId, LocalDateTime start, LocalDateTime end, int limit) {
-        return reportMapper.getTopProducts(storeId, start, end, limit);
+    public List<TopProductReport> getTopProducts(List<Integer> storeIds, LocalDateTime start, LocalDateTime end, int limit) {
+        return reportMapper.getTopProducts(storeIds, start, end, limit);
     }
 
     /**
@@ -82,8 +82,8 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
      * @return a list of {@link DailyReport} grouped by day
      */
     @Override
-    public List<DailyReport> getDailyReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
-        return reportMapper.getDailyReport(storeId, start, end);
+    public List<DailyReport> getDailyReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end) {
+        return reportMapper.getDailyReport(storeIds, start, end);
     }
 
     /**
@@ -96,8 +96,8 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
      * @return a list of {@link ProductSalesReport} grouped by product and category
      */
     @Override
-    public List<ProductSalesReport> getSalesReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
-        return reportMapper.getSalesReport(storeId, start, end);
+    public List<ProductSalesReport> getSalesReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end) {
+        return reportMapper.getSalesReport(storeIds, start, end);
     }
 
     /**
@@ -111,8 +111,8 @@ public class ReportBusinessServiceImpl implements ReportBusinessService {
      * @return an {@link OrderVolumeReport} containing total, peak, and non-peak order counts
      */
     @Override
-    public OrderVolumeReport getOrderVolumeReport(Integer storeId, LocalDateTime start, LocalDateTime end) {
-        OrderVolumeReport report = reportMapper.getOrderVolumeReport(storeId, start, end);
+    public OrderVolumeReport getOrderVolumeReport(List<Integer> storeIds, LocalDateTime start, LocalDateTime end) {
+        OrderVolumeReport report = reportMapper.getOrderVolumeReport(storeIds, start, end);
         if (report == null) {
             report = new OrderVolumeReport()
                     .setTotalOrders(0)

@@ -8,6 +8,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestAttributes;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -31,6 +34,9 @@ public class RestClientService implements Serializable {
     private static final String LOG_UN_AUTHORIZED = "LOG_UN_AUTHORIZED Server Response {}";
     private static final String LOG_INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR Server Response {}";
     private static final String X_USERNAME = "X-Username";
+    private static final String X_ROLES = "X-Roles";
+    private static final String X_PERMISSIONS = "X-Permissions";
+    private static final String X_SCOPES = "X-Scopes";
     private static final WebClient webClient = WebClient.builder().build();
 
     /**
@@ -51,6 +57,9 @@ public class RestClientService implements Serializable {
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(X_USERNAME, username)
+                .header(X_ROLES, forwardedHeader(X_ROLES))
+                .header(X_PERMISSIONS, forwardedHeader(X_PERMISSIONS))
+                .header(X_SCOPES, forwardedHeader(X_SCOPES))
                 .body(publisher, className)
                 .retrieve()
                 .onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent)
@@ -72,6 +81,9 @@ public class RestClientService implements Serializable {
                 .uri(url)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header(X_USERNAME, username)
+                .header(X_ROLES, forwardedHeader(X_ROLES))
+                .header(X_PERMISSIONS, forwardedHeader(X_PERMISSIONS))
+                .header(X_SCOPES, forwardedHeader(X_SCOPES))
                 .retrieve();
 
         retrieve.onStatus(HttpStatus.NO_CONTENT::equals, this::handleNoContent);
@@ -80,6 +92,15 @@ public class RestClientService implements Serializable {
         retrieve.onStatus(HttpStatus.UNAUTHORIZED::equals, this::handleUnAuthorized);
 
         return retrieve.bodyToMono(RestAPIResponse.class);
+    }
+
+    private static String forwardedHeader(String name) {
+        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
+        if (attributes instanceof ServletRequestAttributes servlet) {
+            String value = servlet.getRequest().getHeader(name);
+            return value == null ? "" : value;
+        }
+        return "";
     }
 
     private static void logError(String message, RestAPIResponse response) {

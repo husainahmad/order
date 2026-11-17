@@ -2,30 +2,38 @@ package com.harmoni.pos.order.component;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Security configuration that customizes Spring Security’s web filters.
- * <p>
- * This configuration tells Spring Security to completely ignore security filters for specified request patterns.
- * In this case, all endpoints under {@code /api/**} will bypass Spring Security.
- * </p>
+ * Security configuration for the order service.
+ *
+ * <p>The gateway authenticates the caller and forwards the identity headers;
+ * {@link HeaderAuthoritiesFilter} turns them into a {@code SecurityContext}.
+ * Method security then enforces the {@code @PreAuthorize} rules on the
+ * controllers.</p>
  */
 @Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
-    /**
-     * Configures Spring Security to ignore requests to {@code /api/**}.
-     * <p>
-     * This means no security filters (e.g., authentication, authorization) will be applied
-     * to these endpoints at all.
-     * </p>
-     *
-     * @return a {@link WebSecurityCustomizer} instance for excluding certain paths from Spring Security
-     */
     @Bean
-    public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring()
-                .requestMatchers("/api/**");
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   HeaderAuthoritiesFilter headerAuthoritiesFilter,
+                                                   CallerScopeService callerScopeService)
+            throws Exception {
+        http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/actuator/**", "/error").permitAll()
+                        .anyRequest().authenticated())
+                .addFilterBefore(new CallerScopeFilter(callerScopeService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(headerAuthoritiesFilter, UsernamePasswordAuthenticationFilter.class)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+        return http.build();
     }
 }

@@ -2,6 +2,8 @@ package com.harmoni.pos.order.http.controller;
 
 import com.harmoni.pos.order.business.service.ReportBusinessService;
 import com.harmoni.pos.order.business.service.menu.UserService;
+import com.harmoni.pos.order.component.CallerScope;
+import com.harmoni.pos.order.component.CallerScopeContext;
 import com.harmoni.pos.order.http.response.RestAPIResponse;
 import com.harmoni.pos.order.model.SettlementReport;
 import com.harmoni.pos.order.model.dto.UserDto;
@@ -9,9 +11,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/reports")
@@ -33,12 +38,14 @@ public class ReportController {
      * @return a ResponseEntity containing the settlement report wrapped in RestAPIResponse
      */
     @GetMapping("/settlement")
+    @PreAuthorize("hasAnyAuthority('report:view', 'report:read', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getSettlementReport(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(value = "storeIds", required = false) List<Integer> storeIds,
             @RequestHeader("X-Username") String username
     ) {
-        SettlementReport report = reportBusinessService.generateSettlementReport(getUserDto(username).getStoreId(), start, end);
+        SettlementReport report = reportBusinessService.generateSettlementReport(resolveStoreIds(storeIds, username), start, end);
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
                 .data(report)
                 .build();
@@ -58,14 +65,16 @@ public class ReportController {
      * @return a ResponseEntity containing the list of top products in RestAPIResponse
      */
     @GetMapping("/top-products")
+    @PreAuthorize("hasAnyAuthority('report:view', 'report:read', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getTopProducts(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(value = "storeIds", required = false) List<Integer> storeIds,
             @RequestHeader("X-Username") String username,
             @RequestParam(value = "limit", defaultValue = "10") int limit
     ) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
-                .data(reportBusinessService.getTopProducts(getUserDto(username).getStoreId(), start, end, limit))
+                .data(reportBusinessService.getTopProducts(resolveStoreIds(storeIds, username), start, end, limit))
                 .build();
         return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
     }
@@ -83,13 +92,15 @@ public class ReportController {
      * @return a ResponseEntity containing the list of daily reports in RestAPIResponse
      */
     @GetMapping("/daily")
+    @PreAuthorize("hasAnyAuthority('report:view', 'report:read', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getDailyReport(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(value = "storeIds", required = false) List<Integer> storeIds,
             @RequestHeader("X-Username") String username
     ) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
-                .data(reportBusinessService.getDailyReport(getUserDto(username).getStoreId(), start, end))
+                .data(reportBusinessService.getDailyReport(resolveStoreIds(storeIds, username), start, end))
                 .build();
         return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
     }
@@ -106,13 +117,15 @@ public class ReportController {
      * @return a ResponseEntity containing the list of product sales grouped by category
      */
     @GetMapping("/sales")
+    @PreAuthorize("hasAnyAuthority('report:view', 'report:read', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getSalesReport(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(value = "storeIds", required = false) List<Integer> storeIds,
             @RequestHeader("X-Username") String username
     ) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
-                .data(reportBusinessService.getSalesReport(getUserDto(username).getStoreId(), start, end))
+                .data(reportBusinessService.getSalesReport(resolveStoreIds(storeIds, username), start, end))
                 .build();
         return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
     }
@@ -130,15 +143,39 @@ public class ReportController {
      * @return a ResponseEntity containing the order volume report in RestAPIResponse
      */
     @GetMapping("/order-volume")
+    @PreAuthorize("hasAnyAuthority('report:view', 'report:read', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getOrderVolumeReport(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+            @RequestParam(value = "storeIds", required = false) List<Integer> storeIds,
             @RequestHeader("X-Username") String username
     ) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
-                .data(reportBusinessService.getOrderVolumeReport(getUserDto(username).getStoreId(), start, end))
+                .data(reportBusinessService.getOrderVolumeReport(resolveStoreIds(storeIds, username), start, end))
                 .build();
         return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
+    }
+
+    /**
+     * Resolves the store scope for a report: the explicit store ids when the
+     * caller supplied them, otherwise the signed-in user's store.
+     *
+     * @param storeIds the requested store ids, may be {@code null}
+     * @param username the signed-in user
+     * @return the store ids to report on, never {@code null}
+     */
+    private List<Integer> resolveStoreIds(List<Integer> storeIds, String username) {
+        List<Integer> requested = new ArrayList<>();
+        if (storeIds != null && !storeIds.isEmpty()) {
+            requested.addAll(storeIds);
+        } else {
+            Integer storeId = getUserDto(username).getStoreId();
+            if (storeId != null) {
+                requested.add(storeId);
+            }
+        }
+        CallerScope scope = CallerScopeContext.current();
+        return scope.filterStoreIds(requested);
     }
 
     /**

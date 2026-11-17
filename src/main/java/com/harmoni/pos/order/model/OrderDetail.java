@@ -18,6 +18,10 @@ public class OrderDetail {
     private String productName;
     private Integer categoryId;
     private String categoryName;
+    /**
+     * Free-text note the cashier attached to this line, printed on the kitchen ticket.
+     */
+    private String remark;
     private BigDecimal amount;
     /**
      * What the promotion engine took off this line, zero when no promotion applied.

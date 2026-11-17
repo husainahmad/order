@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -49,6 +50,7 @@ public class OrderCustomerController {
      * @return the customer snapshot, or a response with no data for a walk-in sale
      */
     @GetMapping("/order/{orderId:\\d+}")
+    @PreAuthorize("hasAnyAuthority('order:view', 'customer:read', 'terminal:view', 'availability:view', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getByOrderId(
             @PathVariable("orderId") Integer orderId,
             @RequestHeader("X-Username") String username
@@ -75,6 +77,7 @@ public class OrderCustomerController {
      * @return the customer's orders, most recent first
      */
     @GetMapping("/customer/{customerId:\\d+}/history")
+    @PreAuthorize("hasAnyAuthority('order:view', 'customer:read', 'terminal:view', 'availability:view', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> getHistory(
             @PathVariable("customerId") Long customerId,
             @RequestParam(name = "from", required = false)

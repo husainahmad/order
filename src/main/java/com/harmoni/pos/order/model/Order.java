@@ -30,6 +30,11 @@ public class Order {
     private Integer customerId;
     private String customerName;
     private String customerPhone;
+    /**
+     * Table the order was taken at, when the order type is dine-in. Used on the kitchen
+     * ticket and never on a customer receipt.
+     */
+    private String tableNumber;
     private Integer storeServiceTypesId;
     private List<OrderDetail> orderDetails;
     private OrderStatus status;

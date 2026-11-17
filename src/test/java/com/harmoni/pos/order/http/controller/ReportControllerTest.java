@@ -50,7 +50,7 @@ class ReportControllerTest {
         var report = new SettlementReport()
                 .setTotalOrders(10)
                 .setTotalSales(BigDecimal.valueOf(1000));
-        when(reportBusinessService.generateSettlementReport(anyInt(), any(), any()))
+        when(reportBusinessService.generateSettlementReport(anyList(), any(), any()))
                 .thenReturn(report);
 
         mockMvc.perform(get("/api/v1/reports/settlement")
@@ -73,7 +73,7 @@ class ReportControllerTest {
                 new TopProductReport() {{ setProductId(1); setQuantitySold(50); }},
                 new TopProductReport() {{ setProductId(2); setQuantitySold(30); }}
         );
-        when(reportBusinessService.getTopProducts(anyInt(), any(), any(), anyInt()))
+        when(reportBusinessService.getTopProducts(anyList(), any(), any(), anyInt()))
                 .thenReturn(topProducts);
 
         mockMvc.perform(get("/api/v1/reports/top-products")
@@ -104,7 +104,7 @@ class ReportControllerTest {
                         .setNetSales(BigDecimal.valueOf(150))
                         .setDiscount(BigDecimal.valueOf(10))
         ));
-        when(reportBusinessService.getDailyReport(anyInt(), any(), any()))
+        when(reportBusinessService.getDailyReport(anyList(), any(), any()))
                 .thenReturn(List.of(dailyReport));
 
         mockMvc.perform(get("/api/v1/reports/daily")
@@ -138,7 +138,7 @@ class ReportControllerTest {
                         .setDiscount(BigDecimal.valueOf(10))
                         .setNetSales(BigDecimal.valueOf(140))
         );
-        when(reportBusinessService.getSalesReport(anyInt(), any(), any()))
+        when(reportBusinessService.getSalesReport(anyList(), any(), any()))
                 .thenReturn(salesReport);
 
         mockMvc.perform(get("/api/v1/reports/sales")
@@ -167,7 +167,7 @@ class ReportControllerTest {
                 .setTotalOrders(100)
                 .setPeakTimeOrders(45)
                 .setNonPeakTimeOrders(55);
-        when(reportBusinessService.getOrderVolumeReport(anyInt(), any(), any()))
+        when(reportBusinessService.getOrderVolumeReport(anyList(), any(), any()))
                 .thenReturn(orderVolumeReport);
 
         mockMvc.perform(get("/api/v1/reports/order-volume")

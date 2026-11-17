@@ -12,6 +12,12 @@ public class MenuProperties {
     private String store;
     private String user;
 
+    /**
+     * Internal menu endpoint that expands the caller's brand/chain/store
+     * assignments into the store ids they may report on.
+     */
+    private String scopeStores;
+
 /**
      * Menu endpoint that prices a basket of sale lines against the promotion catalogue.
      */

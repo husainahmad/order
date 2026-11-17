@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -35,6 +36,7 @@ public class OrderPaymentController {
      * @return a {@link ResponseEntity} containing a {@link RestAPIResponse} with the result of the payment processing
      */
     @PutMapping("")
+    @PreAuthorize("hasAnyAuthority('order:view', 'terminal:view', 'availability:view', 'rbac:manage')")
     public ResponseEntity<RestAPIResponse> payOrder(@Valid @RequestBody OrderPaymentDto orderPaymentDto,
                                                      @RequestHeader("X-Username") String username) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()

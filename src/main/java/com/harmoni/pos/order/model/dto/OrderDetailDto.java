@@ -15,6 +15,7 @@ public class OrderDetailDto {
 
     public OrderDetail toOrderDetail() {
         return new OrderDetail().setOrderId(orderId)
-                .setProductId(productId);
+                .setProductId(productId)
+                .setRemark(remark);
     }
 }

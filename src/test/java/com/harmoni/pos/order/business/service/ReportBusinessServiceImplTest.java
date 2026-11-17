@@ -45,10 +45,10 @@ class ReportBusinessServiceImplTest {
                 new PaymentSummary().setPaymentType("CARD").setTotalAmount(BigDecimal.valueOf(300))
         );
 
-        when(reportMapper.getSettlementReport(start, end)).thenReturn(report);
-        when(reportMapper.getPaymentBreakdown(start, end)).thenReturn(payments);
+        when(reportMapper.getSettlementReport(List.of(storeId), start, end)).thenReturn(report);
+        when(reportMapper.getPaymentBreakdown(List.of(storeId), start, end)).thenReturn(payments);
 
-        SettlementReport result = reportBusinessService.generateSettlementReport(storeId, start, end);
+        SettlementReport result = reportBusinessService.generateSettlementReport(List.of(storeId), start, end);
 
         assertEquals(5, result.getTotalOrders());
         assertEquals(BigDecimal.valueOf(1000), result.getTotalSales());
@@ -70,9 +70,9 @@ class ReportBusinessServiceImplTest {
         p2.setQuantitySold(30);
         var topProducts = List.of(p1, p2);
 
-        when(reportMapper.getTopProducts(storeId, start, end, limit)).thenReturn(topProducts);
+        when(reportMapper.getTopProducts(List.of(storeId), start, end, limit)).thenReturn(topProducts);
 
-        List<TopProductReport> result = reportBusinessService.getTopProducts(storeId, start, end, limit);
+        List<TopProductReport> result = reportBusinessService.getTopProducts(List.of(storeId), start, end, limit);
 
         assertEquals(2, result.size());
         assertEquals(1, result.get(0).getProductId().intValue());
@@ -94,9 +94,9 @@ class ReportBusinessServiceImplTest {
                         .setNetSales(BigDecimal.valueOf(150))
                         .setDiscount(BigDecimal.valueOf(10))
         ));
-        when(reportMapper.getDailyReport(storeId, start, end)).thenReturn(List.of(dailyReport));
+        when(reportMapper.getDailyReport(List.of(storeId), start, end)).thenReturn(List.of(dailyReport));
 
-        List<DailyReport> result = reportBusinessService.getDailyReport(storeId, start, end);
+        List<DailyReport> result = reportBusinessService.getDailyReport(List.of(storeId), start, end);
 
         assertEquals(1, result.size());
         assertEquals(LocalDate.of(2025, 1, 1), result.get(0).getDate());
@@ -121,9 +121,9 @@ class ReportBusinessServiceImplTest {
                 .setGrossSales(BigDecimal.valueOf(150))
                 .setDiscount(BigDecimal.valueOf(10))
                 .setNetSales(BigDecimal.valueOf(140));
-        when(reportMapper.getSalesReport(storeId, start, end)).thenReturn(List.of(salesReport));
+        when(reportMapper.getSalesReport(List.of(storeId), start, end)).thenReturn(List.of(salesReport));
 
-        List<ProductSalesReport> result = reportBusinessService.getSalesReport(storeId, start, end);
+        List<ProductSalesReport> result = reportBusinessService.getSalesReport(List.of(storeId), start, end);
 
         assertEquals(1, result.size());
         assertEquals(1, result.get(0).getCategoryId().intValue());
@@ -144,9 +144,9 @@ class ReportBusinessServiceImplTest {
         var report = new OrderVolumeReport()
                 .setTotalOrders(100)
                 .setPeakTimeOrders(45);
-        when(reportMapper.getOrderVolumeReport(storeId, start, end)).thenReturn(report);
+        when(reportMapper.getOrderVolumeReport(List.of(storeId), start, end)).thenReturn(report);
 
-        OrderVolumeReport result = reportBusinessService.getOrderVolumeReport(storeId, start, end);
+        OrderVolumeReport result = reportBusinessService.getOrderVolumeReport(List.of(storeId), start, end);
 
         assertEquals(100, result.getTotalOrders());
         assertEquals(45, result.getPeakTimeOrders());
@@ -158,9 +158,9 @@ class ReportBusinessServiceImplTest {
         var storeId = 1;
         var start = LocalDateTime.of(2025, 1, 1, 0, 0);
         var end = LocalDateTime.of(2025, 1, 2, 0, 0);
-        when(reportMapper.getOrderVolumeReport(storeId, start, end)).thenReturn(null);
+        when(reportMapper.getOrderVolumeReport(List.of(storeId), start, end)).thenReturn(null);
 
-        OrderVolumeReport result = reportBusinessService.getOrderVolumeReport(storeId, start, end);
+        OrderVolumeReport result = reportBusinessService.getOrderVolumeReport(List.of(storeId), start, end);
 
         assertNotNull(result);
         assertEquals(0, result.getTotalOrders());
