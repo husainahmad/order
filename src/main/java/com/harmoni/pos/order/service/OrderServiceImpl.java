@@ -2,10 +2,13 @@ package com.harmoni.pos.order.service;
 
 import com.harmoni.pos.order.exception.BusinessNoContentRequestException;
 import com.harmoni.pos.order.mapper.OrderMapper;
+import com.harmoni.pos.order.mapper.OrderTransactionOutboxMapper;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.OrderDetail;
 import com.harmoni.pos.order.model.OrderDetailSku;
 import com.harmoni.pos.order.model.OrderDetailCustomization;
+import com.harmoni.pos.order.model.OrderTransactionOutbox;
+import com.harmoni.pos.order.model.dto.TransactionEventPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
@@ -41,6 +44,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final OrderDetailService orderDetailService;
     private final OrderDetailCustomizationService orderDetailCustomizationService;
+    private final OrderTransactionOutboxMapper outboxMapper;
 
     /**
      * Generates a unique order number based on the store ID, current timestamp, and a random string.
@@ -126,7 +130,15 @@ public class OrderServiceImpl implements OrderService {
             throw e;
         }
 
+        recordTransactionEvent(order);
         return order;
+    }
+
+    private void recordTransactionEvent(Order order) {
+        outboxMapper.insert(new OrderTransactionOutbox()
+                .setOrderId(order.getId())
+                .setPayload(TransactionEventPayload.toJson(order))
+                .setCreatedAt(new Date(System.currentTimeMillis())));
     }
 
     /**

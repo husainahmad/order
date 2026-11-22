@@ -2,11 +2,13 @@ package com.harmoni.pos.order.service;
 
 import com.harmoni.pos.order.exception.BusinessNoContentRequestException;
 import com.harmoni.pos.order.mapper.OrderMapper;
+import com.harmoni.pos.order.mapper.OrderTransactionOutboxMapper;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.OrderDetail;
 import com.harmoni.pos.order.model.OrderDetailCustomization;
 import com.harmoni.pos.order.model.OrderDetailCustomizationOption;
 import com.harmoni.pos.order.model.OrderDetailSku;
+import com.harmoni.pos.order.model.OrderTransactionOutbox;
 import com.harmoni.pos.order.model.dto.StoreDto;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,6 +39,9 @@ class OrderServiceImplTest {
 
     @Mock
     private OrderDetailCustomizationService orderDetailCustomizationService;
+
+    @Mock
+    private OrderTransactionOutboxMapper outboxMapper;
 
     @InjectMocks
     private OrderServiceImpl orderService;
@@ -146,6 +151,26 @@ class OrderServiceImplTest {
     }
 
     @Test
+    void insertWithIdempotency_shouldRecordTransactionEventInOutbox() {
+        var detail = new OrderDetail().setId(1).setProductId(7).setAmount(new BigDecimal("12.50"));
+        var order = new Order()
+                .setId(42)
+                .setCustomerId(9)
+                .setStoreId(3)
+                .setGrandTotal(new BigDecimal("12.50"))
+                .setOrderDetails(List.of(detail));
+        when(orderMapper.insert(order)).thenReturn(1);
+
+        orderService.insertWithIdempotency(order, null);
+
+        ArgumentCaptor<OrderTransactionOutbox> captor = ArgumentCaptor.forClass(OrderTransactionOutbox.class);
+        verify(outboxMapper).insert(captor.capture());
+        assertEquals(42, captor.getValue().getOrderId().intValue());
+        assertTrue(captor.getValue().getPayload().contains("\"orderId\":42"));
+        assertNotNull(captor.getValue().getCreatedAt());
+    }
+
+    @Test
     void insertWithIdempotency_whenKeyPresentAndNoExisting_shouldInsertWithKey() {
         var order = new Order()
                 .setId(1)
@@ -171,6 +196,7 @@ class OrderServiceImplTest {
         assertEquals(99, result.getId().intValue());
         assertEquals("EXISTING", result.getOrderNo());
         verify(orderMapper, never()).insert(any());
+        verify(outboxMapper, never()).insert(any());
     }
 
     @Test

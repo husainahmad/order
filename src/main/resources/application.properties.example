@@ -58,3 +58,10 @@ menu.url.user=${menu.url}/api/v1/user
 menu.url.scope-stores=${menu.url}/internal/v1/menu/scope/stores
 menu.url.promotion-price=${menu.url}/api/v1/promotion/price
 
+# Customer growth event outbox
+customer.url.base=http://localhost:8084
+harmoni.events.customer-base-url=${customer.url.base}
+harmoni.events.transaction-events-path=/internal/v1/customer-transactions
+harmoni.events.poll-ms=5000
+harmoni.events.batch-size=20
+
