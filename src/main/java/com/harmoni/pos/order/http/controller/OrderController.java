@@ -1,6 +1,7 @@
 package com.harmoni.pos.order.http.controller;
 
 import com.harmoni.pos.order.business.service.OrderBusinessService;
+import com.harmoni.pos.order.component.CallerScopeContext;
 import com.harmoni.pos.order.http.response.RestAPIResponse;
 import com.harmoni.pos.order.model.dto.OrderDto;
 import jakarta.validation.Valid;
@@ -98,6 +99,23 @@ public class OrderController {
             @RequestParam(value = "beforeId", required = false) Integer beforeId) {
         RestAPIResponse restAPIResponse = RestAPIResponse.builder()
                 .data(orderBusinessService.getDailyPageByStore(username, beforeId, limit))
+                .build();
+        return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
+    }
+
+    /**
+     * Retrieves one order with its lines and payment, limited to the caller's store scope.
+     *
+     * @param orderId the ID of the order to retrieve
+     * @return a {@link ResponseEntity} containing the order and HTTP status 200
+     */
+    @GetMapping("/{orderId}")
+    @PreAuthorize("hasAnyAuthority('order:view', 'rbac:manage')")
+    public ResponseEntity<RestAPIResponse> getOrderById(@PathVariable Integer orderId) {
+        RestAPIResponse restAPIResponse = RestAPIResponse.builder()
+                .httpStatus(HttpStatus.OK.value())
+                .data(orderBusinessService.getOrderById(orderId, CallerScopeContext.current()))
+                .error(null)
                 .build();
         return new ResponseEntity<>(restAPIResponse, HttpStatus.OK);
     }

@@ -2,6 +2,9 @@ package com.harmoni.pos.order.business.service;
 
 import com.harmoni.pos.order.business.service.menu.UserService;
 import com.harmoni.pos.order.business.service.promotion.OrderPromotionService;
+import com.harmoni.pos.order.component.CallerScope;
+import com.harmoni.pos.order.exception.BusinessBadRequestException;
+import com.harmoni.pos.order.exception.ScopeAccessDeniedException;
 import com.harmoni.pos.order.model.CalculatedOrder;
 import com.harmoni.pos.order.model.OrderCustomer;
 import com.harmoni.pos.order.model.OrderDetail;
@@ -332,6 +335,21 @@ public class OrderBusinessServiceImpl implements OrderBusinessService {
         order.setStatus(OrderStatus.VOID);
         order.setUpdatedAt(new Date(System.currentTimeMillis()));
         orderService.voidOrderById(order);
+        return order;
+    }
+
+    @Override
+    public Order getOrderById(Integer orderId, CallerScope scope) {
+        if (orderId == null || orderId <= 0) {
+            throw new BusinessBadRequestException("exception.order.id.badRequest.invalid", null);
+        }
+        Order order = orderService.selectByIdWithPayment(orderId);
+        if (scope != null && !scope.isGlobal()) {
+            Integer storeId = order.getStoreId();
+            if (storeId == null || !scope.canAccessStore(storeId)) {
+                throw new ScopeAccessDeniedException("Order is outside the caller's scope");
+            }
+        }
         return order;
     }
 

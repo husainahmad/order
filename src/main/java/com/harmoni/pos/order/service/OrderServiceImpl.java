@@ -159,6 +159,17 @@ public class OrderServiceImpl implements OrderService {
         return order;
     }
 
+    @Override
+    public Order selectByIdWithPayment(Integer id) {
+        Order order = orderMapper.selectByIdWithPayment(id);
+        if (order == null) {
+            throw new BusinessNoContentRequestException(
+                    BusinessNoContentRequestException.NO_CONTENT, null);
+        }
+        attachCustomizations(List.of(order));
+        return order;
+    }
+
     /**
      * Retrieves an order by its idempotency key.
      *

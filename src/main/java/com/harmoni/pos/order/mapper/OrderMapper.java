@@ -13,6 +13,7 @@ public interface OrderMapper {
     int deleteByPrimaryKey(Integer id);
     int insert(Order order);
     Order selectByPrimaryKey(Integer id);
+    Order selectByIdWithPayment(Integer id);
     Order selectByIdempotencyKey(String idempotencyKey);
     List<Order> selectByStoreId(Integer storeId, Timestamp from, Timestamp until);
 

@@ -1,5 +1,6 @@
 package com.harmoni.pos.order.business.service;
 
+import com.harmoni.pos.order.component.CallerScope;
 import com.harmoni.pos.order.model.CalculatedOrder;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.OrderPage;
@@ -123,6 +124,15 @@ public interface OrderBusinessService {
      * @return the voided {@link Order}
      */
     Order voidOrder(Integer orderId, String username);
+
+    /**
+     * Retrieves one order with its lines and payment, restricted to the caller's store scope.
+     *
+     * @param orderId the order id, must be positive
+     * @param scope   the caller's resolved store scope
+     * @return the full order
+     */
+    Order getOrderById(Integer orderId, CallerScope scope);
 
     /**
      * Retrieves a list of confirmed orders for the current store for the current day.

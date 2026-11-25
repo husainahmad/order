@@ -47,6 +47,19 @@
     where o.id = #{id,jdbcType=INTEGER}
   </select>
 
+  <select id="selectByIdWithPayment" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailMapper.Base_Column_List"/>,
+    <include refid="com.harmoni.pos.order.mapper.OrderDetailSkuMapper.Base_Column_List"/>,
+    <include refid="com.harmoni.pos.order.mapper.OrderPaymentMapper.Base_Column_List"/>
+    from orders o
+    left join order_details order_detail on o.id = order_detail.order_id
+    left join order_detail_skus order_detail_sku on order_detail.id = order_detail_sku.order_detail_id
+    left join order_payments order_payment on order_payment.order_id = o.id
+    where o.id = #{id,jdbcType=INTEGER}
+  </select>
+
   <select id="selectByIdempotencyKey" parameterType="java.lang.String" resultMap="BaseResultMap">
     select
     <include refid="Base_Column_List" />,

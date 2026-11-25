@@ -2,8 +2,13 @@ package com.harmoni.pos.order.http.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.harmoni.pos.order.business.service.OrderBusinessService;
+import com.harmoni.pos.order.component.CallerScope;
+import com.harmoni.pos.order.component.CallerScopeContext;
+import com.harmoni.pos.order.exception.BusinessBadRequestException;
+import com.harmoni.pos.order.exception.ScopeAccessDeniedException;
 import com.harmoni.pos.order.model.Order;
 import com.harmoni.pos.order.model.OrderDetail;
+import com.harmoni.pos.order.model.OrderPayment;
 import com.harmoni.pos.order.model.OrderStatus;
 import com.harmoni.pos.order.model.dto.OrderDto;
 import com.harmoni.pos.order.model.dto.OrderDetailDto;
@@ -17,9 +22,13 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -156,5 +165,52 @@ class OrderControllerTest {
                         .header("X-Username", "test-user")
                         .content("not a valid json"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getOrderById_shouldReturnFullOrder() throws Exception {
+        CallerScopeContext.set(CallerScope.of(Set.of(5)));
+        try {
+            Order order = new Order()
+                    .setId(7)
+                    .setStoreId(5)
+                    .setOrderNo("ORD5-001")
+                    .setStatus(OrderStatus.CONFIRMED)
+                    .setOrderDetails(List.of(new OrderDetail().setId(11).setProductId(9)
+                            .setProductName("Burger").setAmount(new BigDecimal("5.00"))))
+                    .setOrderPayment(new OrderPayment().setId(3).setPaymentId(2)
+                            .setAmount(new BigDecimal("5.00")));
+            when(orderBusinessService.getOrderById(eq(7), any())).thenReturn(order);
+
+            mockMvc.perform(get("/api/v1/order/7"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.id").value(7))
+                    .andExpect(jsonPath("$.data.orderDetails[0].productName").value("Burger"))
+                    .andExpect(jsonPath("$.data.orderPayment.amount").value(5.00));
+            verify(orderBusinessService).getOrderById(eq(7),
+                    argThat(scope -> !scope.isGlobal() && scope.getStoreIds().equals(Set.of(5))));
+        } finally {
+            CallerScopeContext.clear();
+        }
+    }
+
+    @Test
+    void getOrderById_shouldReturnBadRequestForNonPositiveId() throws Exception {
+        when(orderBusinessService.getOrderById(eq(0), any()))
+                .thenThrow(new BusinessBadRequestException("exception.order.id.badRequest.invalid", null));
+
+        mockMvc.perform(get("/api/v1/order/0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Bad Request, order id must be positive"));
+    }
+
+    @Test
+    void getOrderById_shouldReturnForbiddenWhenOutsideScope() throws Exception {
+        when(orderBusinessService.getOrderById(eq(8), any()))
+                .thenThrow(new ScopeAccessDeniedException("Order is outside the caller's scope"));
+
+        mockMvc.perform(get("/api/v1/order/8"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.error").value("Order is outside the caller's scope"));
     }
 }

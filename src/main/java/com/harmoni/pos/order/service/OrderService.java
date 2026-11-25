@@ -11,6 +11,7 @@ public interface OrderService {
     int insert(Order order);
     Order insertWithIdempotency(Order order, String idempotencyKey);
     Order selectByPrimaryKey(Integer id);
+    Order selectByIdWithPayment(Integer id);
     Order findByIdempotencyKey(String idempotencyKey);
     List<Order> selectByStoreId(Integer storeId, Timestamp from, Timestamp until);
 
